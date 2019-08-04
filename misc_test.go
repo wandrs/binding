@@ -23,7 +23,7 @@ import (
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
-	"gopkg.in/macaron.v1"
+	"gitea.com/macaron/macaron"
 )
 
 // When binding from Form data, testing the type of data to bind

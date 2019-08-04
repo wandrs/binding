@@ -30,7 +30,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/Unknwon/com"
-	"gopkg.in/macaron.v1"
+	"gitea.com/macaron/macaron"
 )
 
 const _VERSION = "0.6.0"
