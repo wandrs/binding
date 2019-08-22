@@ -29,8 +29,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/Unknwon/com"
 	"gitea.com/macaron/macaron"
+	"github.com/unknwon/com"
 )
 
 const _VERSION = "0.6.0"
