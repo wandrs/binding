@@ -22,8 +22,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/go-chi/chi"
 	. "github.com/smartystreets/goconvey/convey"
-	"gitea.com/macaron/macaron"
 )
 
 var fileTestCases = []fileTestCase{
@@ -76,7 +76,7 @@ func Test_FileUploads(t *testing.T) {
 
 func performFileTest(t *testing.T, binder handlerFunc, testCase fileTestCase) {
 	httpRecorder := httptest.NewRecorder()
-	m := macaron.Classic()
+	c := chi.NewRouter()
 
 	fileTestHandler := func(actual BlogPost, errs Errors) {
 		assertFileAsExpected(t, testCase, actual.HeaderImage, testCase.singleFile)
@@ -90,11 +90,11 @@ func performFileTest(t *testing.T, binder handlerFunc, testCase fileTestCase) {
 		}
 	}
 
-	m.Post(testRoute, binder(BlogPost{}), func(actual BlogPost, errs Errors) {
+	c.Post(testRoute, binder(BlogPost{}), func(actual BlogPost, errs Errors) {
 		fileTestHandler(actual, errs)
 	})
 
-	m.ServeHTTP(httpRecorder, buildRequestWithFile(testCase))
+	c.ServeHTTP(httpRecorder, buildRequestWithFile(testCase))
 
 	switch httpRecorder.Code {
 	case http.StatusNotFound:

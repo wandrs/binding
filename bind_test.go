@@ -44,14 +44,7 @@ func Test_Bind(t *testing.T) {
 		Convey("Bind with file", func() {
 			for _, testCase := range fileTestCases {
 				performFileTest(t, Bind, testCase)
-				performFileTest(t, BindIgnErr, testCase)
 			}
 		})
-	})
-}
-
-func Test_Version(t *testing.T) {
-	Convey("Get package version", t, func() {
-		So(Version(), ShouldEqual, _VERSION)
 	})
 }

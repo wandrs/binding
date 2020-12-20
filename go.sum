@@ -2,6 +2,8 @@ gitea.com/macaron/inject v0.0.0-20190803172902-8375ba841591 h1:UbCTjPcLrNxR9LzKD
 gitea.com/macaron/inject v0.0.0-20190803172902-8375ba841591/go.mod h1:h6E4kLao1Yko6DOU6QDnQPcuoNzvbZqzj2mtPcEn1aM=
 gitea.com/macaron/macaron v1.3.3-0.20190821202302-9646c0587edb h1:amL0md6orTj1tXY16ANzVU9FmzQB+W7aJwp8pVDbrmA=
 gitea.com/macaron/macaron v1.3.3-0.20190821202302-9646c0587edb/go.mod h1:0coI+mSPSwbsyAbOuFllVS38awuk9mevhLD52l50Gjs=
+github.com/go-chi/chi v1.5.1 h1:kfTK3Cxd/dkMu/rKs5ZceWYp+t5CtiE7vmaTv3LjC6w=
+github.com/go-chi/chi v1.5.1/go.mod h1:REp24E+25iKvxgeTfHmdUoL5x15kBiDBlnIl5bCwe2k=
 github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1/go.mod h1:wJfORRmW1u3UXTncJ5qlYoELFm8eSnnEO6hX4iZ3EWY=
 github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e h1:JKmoR8x90Iww1ks85zJ1lfDGgIiMDuIptTOhJq+zKyg=
 github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e/go.mod h1:wJfORRmW1u3UXTncJ5qlYoELFm8eSnnEO6hX4iZ3EWY=

@@ -17,6 +17,7 @@ package binding
 
 import (
 	"mime/multipart"
+	"net/http"
 
 	"gitea.com/macaron/macaron"
 )
@@ -88,7 +89,7 @@ type (
 	}
 
 	// The common function signature of the handlers going under test.
-	handlerFunc func(interface{}, ...interface{}) macaron.Handler
+	handlerFunc func(req *http.Request, obj interface{}) Errors
 
 	// Used for testing mapping an interface to the context
 	// If used (withInterface = true in the testCases), a modeler
@@ -100,7 +101,7 @@ type (
 	}
 )
 
-func (p Post) Validate(ctx *macaron.Context, errs Errors) Errors {
+func (p Post) Validate(req *http.Request, errs Errors) Errors {
 	if len(p.Title) < 10 {
 		errs = append(errs, Error{
 			FieldNames:     []string{"title"},
