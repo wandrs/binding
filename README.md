@@ -1,19 +1,4 @@
-# binding [![Build Status](https://travis-ci.org/go-macaron/binding.svg?branch=master)](https://travis-ci.org/go-macaron/binding) [![Sourcegraph](https://sourcegraph.com/github.com/go-macaron/binding/-/badge.svg)](https://sourcegraph.com/github.com/go-macaron/binding?badge)
-
-Middleware binding provides request data binding and validation for [Macaron](https://github.com/go-macaron/macaron).
-
-### Installation
-
-	go get github.com/go-macaron/binding
-	
-## Getting Help
-
-- [API Reference](https://gowalker.org/github.com/go-macaron/binding)
-- [Documentation](http://go-macaron.com/docs/middlewares/binding)
-
-## Credits
-
-This package is a modified version of [martini-contrib/binding](https://github.com/martini-contrib/binding).
+Middleware binding provides request data binding and validation for net/http, It's a fork of [Macaron](https://github.com/go-macaron/macaron).
 
 ## License
 
