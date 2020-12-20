@@ -1,6 +1,6 @@
 module gitea.com/go-chi/binding
 
-go 1.11
+go 1.13
 
 require (
 	gitea.com/macaron/macaron v1.3.3-0.20190821202302-9646c0587edb
