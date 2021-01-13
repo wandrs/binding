@@ -90,7 +90,9 @@ func performFileTest(t *testing.T, binder handlerFunc, testCase fileTestCase) {
 		}
 	}
 
-	c.Post(testRoute, binder(BlogPost{}), func(actual BlogPost, errs Errors) {
+	c.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
+		var actual BlogPost
+		errs := binder(req, &actual)
 		fileTestHandler(actual, errs)
 	})
 

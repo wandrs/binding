@@ -21,8 +21,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/go-chi/chi"
 	. "github.com/smartystreets/goconvey/convey"
-	"gitea.com/macaron/macaron"
 )
 
 var validationTestCases = []validationTestCase{
@@ -382,9 +382,10 @@ func Test_Validation(t *testing.T) {
 
 func performValidationTest(t *testing.T, testCase validationTestCase) {
 	httpRecorder := httptest.NewRecorder()
-	m := macaron.Classic()
+	m := chi.NewRouter()
 
-	m.Post(testRoute, Validate(testCase.data), func(actual Errors) {
+	m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
+		actual := Validate(req, testCase.data)
 		So(fmt.Sprintf("%+v", actual), ShouldEqual, fmt.Sprintf("%+v", testCase.expectedErrors))
 	})
 

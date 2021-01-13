@@ -23,8 +23,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/go-chi/chi"
 	. "github.com/smartystreets/goconvey/convey"
-	"gitea.com/macaron/macaron"
 )
 
 var jsonTestCases = []jsonTestCase{
@@ -128,7 +128,7 @@ var jsonTestCases = []jsonTestCase{
 func Test_Json(t *testing.T) {
 	Convey("Test JSON", t, func() {
 		for _, testCase := range jsonTestCases {
-			performJsonTest(t, Json, testCase)
+			performJsonTest(t, JSON, testCase)
 		}
 	})
 }
@@ -136,7 +136,7 @@ func Test_Json(t *testing.T) {
 func performJsonTest(t *testing.T, binder handlerFunc, testCase jsonTestCase) {
 	var payload io.Reader
 	httpRecorder := httptest.NewRecorder()
-	m := macaron.Classic()
+	m := chi.NewRouter()
 
 	jsonTestHandler := func(actual interface{}, errs Errors) {
 		if testCase.shouldSucceedOnJson && len(errs) > 0 {
@@ -150,50 +150,65 @@ func performJsonTest(t *testing.T, binder handlerFunc, testCase jsonTestCase) {
 	switch testCase.expected.(type) {
 	case []Post:
 		if testCase.withInterface {
-			m.Post(testRoute, binder([]Post{}, (*modeler)(nil)), func(actual []Post, iface modeler, errs Errors) {
-
-				for _, a := range actual {
-					So(a.Title, ShouldEqual, iface.Model())
+			m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
+				var actual []Post
+				errs := binder(req, &actual)
+				for i, a := range actual {
+					So(a.Title, ShouldEqual, testCase.expected.([]Post)[i].Title)
 					jsonTestHandler(a, errs)
 				}
 			})
 		} else {
-			m.Post(testRoute, binder([]Post{}), func(actual []Post, errs Errors) {
+			m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
+				var actual []Post
+				errs := binder(req, &actual)
 				jsonTestHandler(actual, errs)
 			})
 		}
 
 	case Post:
 		if testCase.withInterface {
-			m.Post(testRoute, binder(Post{}, (*modeler)(nil)), func(actual Post, iface modeler, errs Errors) {
-				So(actual.Title, ShouldEqual, iface.Model())
+			m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
+				var actual Post
+				errs := binder(req, &actual)
+				So(actual.Title, ShouldEqual, testCase.expected.(Post).Title)
 				jsonTestHandler(actual, errs)
 			})
 		} else {
-			m.Post(testRoute, binder(Post{}), func(actual Post, errs Errors) {
+			m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
+				var actual Post
+				errs := binder(req, &actual)
 				jsonTestHandler(actual, errs)
 			})
 		}
 
 	case BlogPost:
 		if testCase.withInterface {
-			m.Post(testRoute, binder(BlogPost{}, (*modeler)(nil)), func(actual BlogPost, iface modeler, errs Errors) {
-				So(actual.Title, ShouldEqual, iface.Model())
+			m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
+				var actual BlogPost
+				errs := binder(req, &actual)
+				So(actual.Title, ShouldEqual, testCase.expected.(BlogPost).Title)
 				jsonTestHandler(actual, errs)
 			})
 		} else {
-			m.Post(testRoute, binder(BlogPost{}), func(actual BlogPost, errs Errors) {
+			m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
+				var actual BlogPost
+				errs := binder(req, &actual)
 				jsonTestHandler(actual, errs)
 			})
 		}
 	case Group:
 		if testCase.withInterface {
-			m.Post(testRoute, binder(Group{}, (*modeler)(nil)), func(actual Group, iface modeler, errs Errors) {
-				So(actual.Name, ShouldEqual, iface.Model())
+			m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
+				var actual Group
+				errs := binder(req, &actual)
+				So(actual.Name, ShouldEqual, testCase.expected.(Group).Name)
 				jsonTestHandler(actual, errs)
 			})
 		} else {
-			m.Post(testRoute, binder(Group{}), func(actual Group, errs Errors) {
+			m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
+				var actual Group
+				errs := binder(req, &actual)
 				jsonTestHandler(actual, errs)
 			})
 		}

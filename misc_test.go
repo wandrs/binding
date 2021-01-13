@@ -22,8 +22,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/go-chi/chi"
 	. "github.com/smartystreets/goconvey/convey"
-	"gitea.com/macaron/macaron"
 )
 
 // When binding from Form data, testing the type of data to bind
@@ -58,9 +58,11 @@ func Test_SetWithProperType(t *testing.T) {
 
 		for key, testCase := range testInputs {
 			httpRecorder := httptest.NewRecorder()
-			m := macaron.Classic()
+			m := chi.NewRouter()
 
-			m.Post(testRoute, Form(Everything{}), func(actual Everything, errs Errors) {
+			m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
+				var actual Everything
+				errs := Form(req, &actual)
 				So(fmt.Sprintf("%+v", actual), ShouldEqual, fmt.Sprintf("%+v", expectedOutputs[key]))
 				if key == "errorful" {
 					So(errs, ShouldHaveLength, 10)

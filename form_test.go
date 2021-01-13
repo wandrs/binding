@@ -23,8 +23,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/go-chi/chi"
 	. "github.com/smartystreets/goconvey/convey"
-	"gitea.com/macaron/macaron"
 )
 
 var formTestCases = []formTestCase{
@@ -166,14 +166,16 @@ func init() {
 func Test_Form(t *testing.T) {
 	Convey("Test form", t, func() {
 		for _, testCase := range formTestCases {
-			performFormTest(t, Form, testCase)
+			t.Run(testCase.description, func(t *testing.T) {
+				performFormTest(t, Form, testCase)
+			})
 		}
 	})
 }
 
 func performFormTest(t *testing.T, binder handlerFunc, testCase formTestCase) {
 	resp := httptest.NewRecorder()
-	m := macaron.Classic()
+	m := chi.NewRouter()
 
 	formTestHandler := func(actual interface{}, errs Errors) {
 		if testCase.shouldSucceed && len(errs) > 0 {
@@ -191,40 +193,58 @@ func performFormTest(t *testing.T, binder handlerFunc, testCase formTestCase) {
 	switch testCase.expected.(type) {
 	case Post:
 		if testCase.withInterface {
-			m.Post(testRoute, binder(Post{}, (*modeler)(nil)), func(actual Post, iface modeler, errs Errors) {
-				So(actual.Title, ShouldEqual, iface.Model())
+			m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
+				var actual Post
+				errs := binder(req, &actual)
+				p := testCase.expected.(Post)
+				So(actual.Title, ShouldEqual, p.Title)
 				formTestHandler(actual, errs)
 			})
 		} else {
-			m.Post(testRoute, binder(Post{}), func(actual Post, errs Errors) {
+			m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
+				var actual Post
+				errs := binder(req, &actual)
 				formTestHandler(actual, errs)
 			})
-			m.Get(testRoute, binder(Post{}), func(actual Post, errs Errors) {
+			m.Get(testRoute, func(resp http.ResponseWriter, req *http.Request) {
+				var actual Post
+				errs := binder(req, &actual)
 				formTestHandler(actual, errs)
 			})
 		}
 
 	case BlogPost:
 		if testCase.withInterface {
-			m.Post(testRoute, binder(BlogPost{}, (*modeler)(nil)), func(actual BlogPost, iface modeler, errs Errors) {
-				So(actual.Title, ShouldEqual, iface.Model())
+			m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
+				var actual BlogPost
+				errs := binder(req, &actual)
+				p := testCase.expected.(BlogPost)
+				So(actual.Title, ShouldEqual, p.Title)
 				formTestHandler(actual, errs)
 			})
 		} else {
-			m.Post(testRoute, binder(BlogPost{}), func(actual BlogPost, errs Errors) {
+			m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
+				var actual BlogPost
+				errs := binder(req, &actual)
 				formTestHandler(actual, errs)
 			})
 		}
 
 	case EmbedPerson:
-		m.Post(testRoute, binder(EmbedPerson{}), func(actual EmbedPerson, errs Errors) {
+		m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
+			var actual EmbedPerson
+			errs := binder(req, &actual)
 			formTestHandler(actual, errs)
 		})
-		m.Get(testRoute, binder(EmbedPerson{}), func(actual EmbedPerson, errs Errors) {
+		m.Get(testRoute, func(resp http.ResponseWriter, req *http.Request) {
+			var actual EmbedPerson
+			errs := binder(req, &actual)
 			formTestHandler(actual, errs)
 		})
 	case CustomErrorHandle:
-		m.Get(testRoute, binder(CustomErrorHandle{}), func(actual CustomErrorHandle, errs Errors) {
+		m.Get(testRoute, func(resp http.ResponseWriter, req *http.Request) {
+			var actual CustomErrorHandle
+			errs := binder(req, &actual)
 			formTestHandler(actual, errs)
 		})
 	}
@@ -269,8 +289,10 @@ type defaultForm struct {
 
 func Test_Default(t *testing.T) {
 	Convey("Test default value", t, func() {
-		m := macaron.Classic()
-		m.Get("/", Bind(defaultForm{}), func(f defaultForm) {
+		m := chi.NewRouter()
+		m.Get("/", func(resp http.ResponseWriter, req *http.Request) {
+			var f defaultForm
+			Bind(req, &f)
 			So(f.Default, ShouldEqual, "hello world")
 		})
 		resp := httptest.NewRecorder()

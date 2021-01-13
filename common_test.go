@@ -18,8 +18,6 @@ package binding
 import (
 	"mime/multipart"
 	"net/http"
-
-	"gitea.com/macaron/macaron"
 )
 
 // These types are mostly contrived examples, but they're used
@@ -119,8 +117,6 @@ func (p Post) Model() string {
 func (g Group) Model() string {
 	return g.Name
 }
-
-func (_ CustomErrorHandle) Error(_ *macaron.Context, _ Errors) {}
 
 const (
 	testRoute       = "/test"

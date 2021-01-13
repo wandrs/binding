@@ -24,8 +24,8 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/go-chi/chi"
 	. "github.com/smartystreets/goconvey/convey"
-	"gitea.com/macaron/macaron"
 )
 
 var multipartFormTestCases = []multipartFormTestCase{
@@ -82,9 +82,11 @@ func Test_MultipartForm(t *testing.T) {
 
 func performMultipartFormTest(t *testing.T, binder handlerFunc, testCase multipartFormTestCase) {
 	httpRecorder := httptest.NewRecorder()
-	m := macaron.Classic()
+	m := chi.NewRouter()
 
-	m.Post(testRoute, binder(BlogPost{}), func(actual BlogPost, errs Errors) {
+	m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
+		var actual BlogPost
+		errs := binder(req, &actual)
 		if testCase.shouldSucceed && len(errs) > 0 {
 			So(len(errs), ShouldEqual, 0)
 		} else if !testCase.shouldSucceed && len(errs) == 0 {
