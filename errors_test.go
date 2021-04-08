@@ -19,57 +19,51 @@ import (
 	"fmt"
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_ErrorsAdd(t *testing.T) {
-	Convey("Add new error", t, func() {
-		var actual Errors
-		expected := Errors{
-			Error{
-				FieldNames:     []string{"Field1", "Field2"},
-				Classification: "ErrorClass",
-				Message:        "Some message",
-			},
-		}
+	var actual Errors
+	expected := Errors{
+		Error{
+			FieldNames:     []string{"Field1", "Field2"},
+			Classification: "ErrorClass",
+			Message:        "Some message",
+		},
+	}
 
-		actual.Add(expected[0].FieldNames, expected[0].Classification, expected[0].Message)
+	actual.Add(expected[0].FieldNames, expected[0].Classification, expected[0].Message)
 
-		So(len(actual), ShouldEqual, 1)
-		So(fmt.Sprintf("%#v", actual), ShouldEqual, fmt.Sprintf("%#v", expected))
-	})
+	assert.EqualValues(t, len(actual), 1)
+	assert.EqualValues(t, fmt.Sprintf("%#v", actual), fmt.Sprintf("%#v", expected))
 }
 
 func Test_ErrorsLen(t *testing.T) {
-	Convey("Get number of errors", t, func() {
-		So(errorsTestSet.Len(), ShouldEqual, len(errorsTestSet))
-	})
+	assert.EqualValues(t, errorsTestSet.Len(), len(errorsTestSet))
 }
 
 func Test_ErrorsHas(t *testing.T) {
-	Convey("Check error class", t, func() {
-		So(errorsTestSet.Has("ClassA"), ShouldBeTrue)
-		So(errorsTestSet.Has("ClassQ"), ShouldBeFalse)
-	})
+	assert.True(t, errorsTestSet.Has("ClassA"))
+	assert.False(t, errorsTestSet.Has("ClassQ"))
 }
 
 func Test_ErrorGetters(t *testing.T) {
-	Convey("Get error detail", t, func() {
-		err := Error{
-			FieldNames:     []string{"field1", "field2"},
-			Classification: "ErrorClass",
-			Message:        "The message",
-		}
 
-		fieldsActual := err.Fields()
+	err := Error{
+		FieldNames:     []string{"field1", "field2"},
+		Classification: "ErrorClass",
+		Message:        "The message",
+	}
 
-		So(len(fieldsActual), ShouldEqual, 2)
-		So(fieldsActual[0], ShouldEqual, "field1")
-		So(fieldsActual[1], ShouldEqual, "field2")
+	fieldsActual := err.Fields()
 
-		So(err.Kind(), ShouldEqual, "ErrorClass")
-		So(err.Error(), ShouldEqual, "The message")
-	})
+	assert.EqualValues(t, len(fieldsActual), 2)
+	assert.EqualValues(t, fieldsActual[0], "field1")
+	assert.EqualValues(t, fieldsActual[1], "field2")
+
+	assert.EqualValues(t, err.Kind(), "ErrorClass")
+	assert.EqualValues(t, err.Error(), "The message")
+
 }
 
 /*

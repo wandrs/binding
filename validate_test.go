@@ -22,7 +22,7 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 )
 
 var validationTestCases = []validationTestCase{
@@ -373,11 +373,9 @@ var validationTestCases = []validationTestCase{
 }
 
 func Test_Validation(t *testing.T) {
-	Convey("Test validation", t, func() {
-		for _, testCase := range validationTestCases {
-			performValidationTest(t, testCase)
-		}
-	})
+	for _, testCase := range validationTestCases {
+		performValidationTest(t, testCase)
+	}
 }
 
 func performValidationTest(t *testing.T, testCase validationTestCase) {
@@ -386,7 +384,7 @@ func performValidationTest(t *testing.T, testCase validationTestCase) {
 
 	m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
 		actual := Validate(req, testCase.data)
-		So(fmt.Sprintf("%+v", actual), ShouldEqual, fmt.Sprintf("%+v", testCase.expectedErrors))
+		assert.EqualValues(t, fmt.Sprintf("%+v", actual), fmt.Sprintf("%+v", testCase.expectedErrors))
 	})
 
 	req, err := http.NewRequest("POST", testRoute, nil)

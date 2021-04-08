@@ -21,7 +21,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 )
 
 var errorTestCases = []errorTestCase{
@@ -127,11 +127,9 @@ var errorTestCases = []errorTestCase{
 }
 
 func Test_ErrorHandler(t *testing.T) {
-	Convey("Error handler", t, func() {
-		for _, testCase := range errorTestCases {
-			performErrorTest(t, testCase)
-		}
-	})
+	for _, testCase := range errorTestCases {
+		performErrorTest(t, testCase)
+	}
 }
 
 func performErrorTest(t *testing.T, testCase errorTestCase) {
@@ -139,12 +137,12 @@ func performErrorTest(t *testing.T, testCase errorTestCase) {
 
 	errorHandler(testCase.errors, resp)
 
-	So(resp.Code, ShouldEqual, testCase.expected.statusCode)
-	So(resp.Header().Get("Content-Type"), ShouldEqual, testCase.expected.contentType)
+	assert.EqualValues(t, resp.Code, testCase.expected.statusCode)
+	assert.EqualValues(t, resp.Header().Get("Content-Type"), testCase.expected.contentType)
 
 	actualBody, err := ioutil.ReadAll(resp.Body)
-	So(err, ShouldBeNil)
-	So(string(actualBody), ShouldEqual, testCase.expected.body)
+	assert.Nil(t, err)
+	assert.EqualValues(t, string(actualBody), testCase.expected.body)
 }
 
 type (

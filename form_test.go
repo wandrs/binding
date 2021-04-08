@@ -24,7 +24,7 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 )
 
 var formTestCases = []formTestCase{
@@ -164,13 +164,11 @@ func init() {
 }
 
 func Test_Form(t *testing.T) {
-	Convey("Test form", t, func() {
-		for _, testCase := range formTestCases {
-			t.Run(testCase.description, func(t *testing.T) {
-				performFormTest(t, Form, testCase)
-			})
-		}
-	})
+	for _, testCase := range formTestCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			performFormTest(t, Form, testCase)
+		})
+	}
 }
 
 func performFormTest(t *testing.T, binder handlerFunc, testCase formTestCase) {
@@ -179,14 +177,14 @@ func performFormTest(t *testing.T, binder handlerFunc, testCase formTestCase) {
 
 	formTestHandler := func(actual interface{}, errs Errors) {
 		if testCase.shouldSucceed && len(errs) > 0 {
-			So(len(errs), ShouldEqual, 0)
+			assert.EqualValues(t, 0, len(errs))
 		} else if !testCase.shouldSucceed && len(errs) == 0 {
-			So(len(errs), ShouldNotEqual, 0)
+			assert.NotEqual(t, 0, len(errs))
 		}
 		expString := fmt.Sprintf("%+v", testCase.expected)
 		actString := fmt.Sprintf("%+v", actual)
 		if actString != expString && !(testCase.deepEqual && reflect.DeepEqual(testCase.expected, actual)) {
-			So(actString, ShouldEqual, expString)
+			assert.EqualValues(t, actString, expString)
 		}
 	}
 
@@ -197,7 +195,7 @@ func performFormTest(t *testing.T, binder handlerFunc, testCase formTestCase) {
 				var actual Post
 				errs := binder(req, &actual)
 				p := testCase.expected.(Post)
-				So(actual.Title, ShouldEqual, p.Title)
+				assert.EqualValues(t, actual.Title, p.Title)
 				formTestHandler(actual, errs)
 			})
 		} else {
@@ -219,7 +217,7 @@ func performFormTest(t *testing.T, binder handlerFunc, testCase formTestCase) {
 				var actual BlogPost
 				errs := binder(req, &actual)
 				p := testCase.expected.(BlogPost)
-				So(actual.Title, ShouldEqual, p.Title)
+				assert.EqualValues(t, actual.Title, p.Title)
 				formTestHandler(actual, errs)
 			})
 		} else {
@@ -288,17 +286,15 @@ type defaultForm struct {
 }
 
 func Test_Default(t *testing.T) {
-	Convey("Test default value", t, func() {
-		m := chi.NewRouter()
-		m.Get("/", func(resp http.ResponseWriter, req *http.Request) {
-			var f defaultForm
-			Bind(req, &f)
-			So(f.Default, ShouldEqual, "hello world")
-		})
-		resp := httptest.NewRecorder()
-		req, err := http.NewRequest("GET", "/", nil)
-		So(err, ShouldBeNil)
-
-		m.ServeHTTP(resp, req)
+	m := chi.NewRouter()
+	m.Get("/", func(resp http.ResponseWriter, req *http.Request) {
+		var f defaultForm
+		Bind(req, &f)
+		assert.EqualValues(t, f.Default, "hello world")
 	})
+	resp := httptest.NewRecorder()
+	req, err := http.NewRequest("GET", "/", nil)
+	assert.Nil(t, err)
+
+	m.ServeHTTP(resp, req)
 }

@@ -25,7 +25,7 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 )
 
 var multipartFormTestCases = []multipartFormTestCase{
@@ -73,11 +73,9 @@ var multipartFormTestCases = []multipartFormTestCase{
 }
 
 func Test_MultipartForm(t *testing.T) {
-	Convey("Test multipart form", t, func() {
-		for _, testCase := range multipartFormTestCases {
-			performMultipartFormTest(t, MultipartForm, testCase)
-		}
-	})
+	for _, testCase := range multipartFormTestCases {
+		performMultipartFormTest(t, MultipartForm, testCase)
+	}
 }
 
 func performMultipartFormTest(t *testing.T, binder handlerFunc, testCase multipartFormTestCase) {
@@ -88,11 +86,11 @@ func performMultipartFormTest(t *testing.T, binder handlerFunc, testCase multipa
 		var actual BlogPost
 		errs := binder(req, &actual)
 		if testCase.shouldSucceed && len(errs) > 0 {
-			So(len(errs), ShouldEqual, 0)
+			assert.EqualValues(t, 0, len(errs))
 		} else if !testCase.shouldSucceed && len(errs) == 0 {
-			So(len(errs), ShouldNotEqual, 0)
+			assert.NotEqual(t, 0, len(errs))
 		}
-		So(fmt.Sprintf("%+v", actual), ShouldEqual, fmt.Sprintf("%+v", testCase.inputAndExpected))
+		assert.EqualValues(t, fmt.Sprintf("%+v", actual), fmt.Sprintf("%+v", testCase.inputAndExpected))
 	})
 
 	multipartPayload, mpWriter := makeMultipartPayload(testCase)

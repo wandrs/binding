@@ -20,11 +20,13 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
+	"runtime"
 	"strings"
 	"testing"
 
 	"github.com/go-chi/chi"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 )
 
 var jsonTestCases = []jsonTestCase{
@@ -78,7 +80,7 @@ var jsonTestCases = []jsonTestCase{
 		shouldSucceedOnJson: false,
 		payload:             `{"title":"foo"`,
 		contentType:         _JSON_CONTENT_TYPE,
-		expected:            Post{},
+		expected:            Post{Title: "foo"},
 	},
 	{
 		description:         "Deserialization with nested and embedded struct",
@@ -126,120 +128,130 @@ var jsonTestCases = []jsonTestCase{
 }
 
 func Test_Json(t *testing.T) {
-	Convey("Test JSON", t, func() {
-		for _, testCase := range jsonTestCases {
-			performJsonTest(t, JSON, testCase)
-		}
-	})
+	for _, testCase := range jsonTestCases {
+		performJsonTest(t, JSON, testCase)
+	}
 }
 
 func performJsonTest(t *testing.T, binder handlerFunc, testCase jsonTestCase) {
-	var payload io.Reader
-	httpRecorder := httptest.NewRecorder()
-	m := chi.NewRouter()
+	fnName := runtime.FuncForPC(reflect.ValueOf(binder).Pointer()).Name()
+	t.Run(testCase.description, func(t *testing.T) {
+		var payload io.Reader
+		httpRecorder := httptest.NewRecorder()
+		m := chi.NewRouter()
 
-	jsonTestHandler := func(actual interface{}, errs Errors) {
-		if testCase.shouldSucceedOnJson && len(errs) > 0 {
-			So(len(errs), ShouldEqual, 0)
-		} else if !testCase.shouldSucceedOnJson && len(errs) == 0 {
-			So(len(errs), ShouldNotEqual, 0)
-		}
-		So(fmt.Sprintf("%+v", actual), ShouldEqual, fmt.Sprintf("%+v", testCase.expected))
-	}
-
-	switch testCase.expected.(type) {
-	case []Post:
-		if testCase.withInterface {
-			m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
-				var actual []Post
-				errs := binder(req, &actual)
-				for i, a := range actual {
-					So(a.Title, ShouldEqual, testCase.expected.([]Post)[i].Title)
-					jsonTestHandler(a, errs)
+		jsonTestHandler := func(actual interface{}, errs Errors) {
+			if fnName == "JSON" {
+				if testCase.shouldSucceedOnJson {
+					assert.EqualValues(t, 0, len(errs), errs)
+					assert.EqualValues(t, fmt.Sprintf("%+v", testCase.expected), fmt.Sprintf("%+v", actual))
+				} else {
+					assert.NotEqual(t, 0, len(errs))
 				}
-			})
+			} else if fnName == "Bind" {
+				if !testCase.shouldFailOnBind {
+					assert.EqualValues(t, 0, len(errs), errs)
+				} else {
+					assert.NotEqual(t, 0, len(errs))
+					assert.EqualValues(t, fmt.Sprintf("%+v", testCase.expected), fmt.Sprintf("%+v", actual))
+				}
+			}
+		}
+
+		switch testCase.expected.(type) {
+		case []Post:
+			if testCase.withInterface {
+				m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
+					var actual []Post
+					errs := binder(req, &actual)
+					for i, a := range actual {
+						assert.EqualValues(t, testCase.expected.([]Post)[i].Title, a.Title)
+						jsonTestHandler(a, errs)
+					}
+				})
+			} else {
+				m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
+					var actual []Post
+					errs := binder(req, &actual)
+					jsonTestHandler(actual, errs)
+				})
+			}
+
+		case Post:
+			if testCase.withInterface {
+				m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
+					var actual Post
+					errs := binder(req, &actual)
+					assert.EqualValues(t, actual.Title, testCase.expected.(Post).Title)
+					jsonTestHandler(actual, errs)
+				})
+			} else {
+				m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
+					var actual Post
+					errs := binder(req, &actual)
+					jsonTestHandler(actual, errs)
+				})
+			}
+
+		case BlogPost:
+			if testCase.withInterface {
+				m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
+					var actual BlogPost
+					errs := binder(req, &actual)
+					assert.EqualValues(t, actual.Title, testCase.expected.(BlogPost).Title)
+					jsonTestHandler(actual, errs)
+				})
+			} else {
+				m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
+					var actual BlogPost
+					errs := binder(req, &actual)
+					jsonTestHandler(actual, errs)
+				})
+			}
+		case Group:
+			if testCase.withInterface {
+				m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
+					var actual Group
+					errs := binder(req, &actual)
+					assert.EqualValues(t, actual.Name, testCase.expected.(Group).Name)
+					jsonTestHandler(actual, errs)
+				})
+			} else {
+				m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
+					var actual Group
+					errs := binder(req, &actual)
+					jsonTestHandler(actual, errs)
+				})
+			}
+		}
+
+		if testCase.payload == "-nil-" {
+			payload = nil
 		} else {
-			m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
-				var actual []Post
-				errs := binder(req, &actual)
-				jsonTestHandler(actual, errs)
-			})
+			payload = strings.NewReader(testCase.payload)
 		}
 
-	case Post:
-		if testCase.withInterface {
-			m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
-				var actual Post
-				errs := binder(req, &actual)
-				So(actual.Title, ShouldEqual, testCase.expected.(Post).Title)
-				jsonTestHandler(actual, errs)
-			})
-		} else {
-			m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
-				var actual Post
-				errs := binder(req, &actual)
-				jsonTestHandler(actual, errs)
-			})
+		req, err := http.NewRequest("POST", testRoute, payload)
+		if err != nil {
+			panic(err)
 		}
+		req.Header.Set("Content-Type", testCase.contentType)
 
-	case BlogPost:
-		if testCase.withInterface {
-			m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
-				var actual BlogPost
-				errs := binder(req, &actual)
-				So(actual.Title, ShouldEqual, testCase.expected.(BlogPost).Title)
-				jsonTestHandler(actual, errs)
-			})
-		} else {
-			m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
-				var actual BlogPost
-				errs := binder(req, &actual)
-				jsonTestHandler(actual, errs)
-			})
+		m.ServeHTTP(httpRecorder, req)
+
+		switch httpRecorder.Code {
+		case http.StatusNotFound:
+			panic("Routing is messed up in test fixture (got 404): check method and path")
+		case http.StatusInternalServerError:
+			panic("Something bad happened on '" + testCase.description + "'")
+		default:
+			if testCase.shouldSucceedOnJson &&
+				httpRecorder.Code != http.StatusOK &&
+				!testCase.shouldFailOnBind {
+				assert.EqualValues(t, httpRecorder.Code, http.StatusOK)
+			}
 		}
-	case Group:
-		if testCase.withInterface {
-			m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
-				var actual Group
-				errs := binder(req, &actual)
-				So(actual.Name, ShouldEqual, testCase.expected.(Group).Name)
-				jsonTestHandler(actual, errs)
-			})
-		} else {
-			m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
-				var actual Group
-				errs := binder(req, &actual)
-				jsonTestHandler(actual, errs)
-			})
-		}
-	}
-
-	if testCase.payload == "-nil-" {
-		payload = nil
-	} else {
-		payload = strings.NewReader(testCase.payload)
-	}
-
-	req, err := http.NewRequest("POST", testRoute, payload)
-	if err != nil {
-		panic(err)
-	}
-	req.Header.Set("Content-Type", testCase.contentType)
-
-	m.ServeHTTP(httpRecorder, req)
-
-	switch httpRecorder.Code {
-	case http.StatusNotFound:
-		panic("Routing is messed up in test fixture (got 404): check method and path")
-	case http.StatusInternalServerError:
-		panic("Something bad happened on '" + testCase.description + "'")
-	default:
-		if testCase.shouldSucceedOnJson &&
-			httpRecorder.Code != http.StatusOK &&
-			!testCase.shouldFailOnBind {
-			So(httpRecorder.Code, ShouldEqual, http.StatusOK)
-		}
-	}
+	})
 }
 
 type (

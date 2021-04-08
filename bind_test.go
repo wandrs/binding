@@ -17,34 +17,30 @@ package binding
 
 import (
 	"testing"
-
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 func Test_Bind(t *testing.T) {
-	Convey("Bind test", t, func() {
-		Convey("Bind form", func() {
-			for _, testCase := range formTestCases {
-				performFormTest(t, Bind, testCase)
-			}
-		})
+	t.Run("Bind form", func(t *testing.T) {
+		for _, testCase := range formTestCases {
+			performFormTest(t, Bind, testCase)
+		}
+	})
 
-		Convey("Bind JSON", func() {
-			for _, testCase := range jsonTestCases {
-				performJsonTest(t, Bind, testCase)
-			}
-		})
+	t.Run("Bind JSON", func(t *testing.T) {
+		for _, testCase := range jsonTestCases {
+			performJsonTest(t, Bind, testCase)
+		}
+	})
 
-		Convey("Bind multipart form", func() {
-			for _, testCase := range multipartFormTestCases {
-				performMultipartFormTest(t, Bind, testCase)
-			}
-		})
+	t.Run("Bind multipart form", func(t *testing.T) {
+		for _, testCase := range multipartFormTestCases {
+			performMultipartFormTest(t, Bind, testCase)
+		}
+	})
 
-		Convey("Bind with file", func() {
-			for _, testCase := range fileTestCases {
-				performFileTest(t, Bind, testCase)
-			}
-		})
+	t.Run("Bind with file", func(t *testing.T) {
+		for _, testCase := range fileTestCases {
+			performFileTest(t, Bind, testCase)
+		}
 	})
 }
