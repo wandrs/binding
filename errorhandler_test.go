@@ -137,12 +137,12 @@ func performErrorTest(t *testing.T, testCase errorTestCase) {
 
 	errorHandler(testCase.errors, resp)
 
-	assert.EqualValues(t, resp.Code, testCase.expected.statusCode)
-	assert.EqualValues(t, resp.Header().Get("Content-Type"), testCase.expected.contentType)
+	assert.EqualValues(t, testCase.expected.statusCode, resp.Code)
+	assert.EqualValues(t, testCase.expected.contentType, resp.Header().Get("Content-Type"))
 
 	actualBody, err := ioutil.ReadAll(resp.Body)
 	assert.Nil(t, err)
-	assert.EqualValues(t, string(actualBody), testCase.expected.body)
+	assert.EqualValues(t, testCase.expected.body, string(actualBody))
 }
 
 type (

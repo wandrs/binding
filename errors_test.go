@@ -34,12 +34,12 @@ func Test_ErrorsAdd(t *testing.T) {
 
 	actual.Add(expected[0].FieldNames, expected[0].Classification, expected[0].Message)
 
-	assert.EqualValues(t, len(actual), 1)
-	assert.EqualValues(t, fmt.Sprintf("%#v", actual), fmt.Sprintf("%#v", expected))
+	assert.Len(t, actual, 1)
+	assert.EqualValues(t, fmt.Sprintf("%#v", expected), fmt.Sprintf("%#v", actual))
 }
 
 func Test_ErrorsLen(t *testing.T) {
-	assert.EqualValues(t, errorsTestSet.Len(), len(errorsTestSet))
+	assert.EqualValues(t, len(errorsTestSet), errorsTestSet.Len())
 }
 
 func Test_ErrorsHas(t *testing.T) {
@@ -57,12 +57,12 @@ func Test_ErrorGetters(t *testing.T) {
 
 	fieldsActual := err.Fields()
 
-	assert.EqualValues(t, len(fieldsActual), 2)
-	assert.EqualValues(t, fieldsActual[0], "field1")
-	assert.EqualValues(t, fieldsActual[1], "field2")
+	assert.Len(t, fieldsActual, 2)
+	assert.EqualValues(t, "field1", fieldsActual[0])
+	assert.EqualValues(t, "field2", fieldsActual[1])
 
-	assert.EqualValues(t, err.Kind(), "ErrorClass")
-	assert.EqualValues(t, err.Error(), "The message")
+	assert.EqualValues(t, "ErrorClass", err.Kind())
+	assert.EqualValues(t, "The message", err.Error())
 
 }
 

@@ -143,16 +143,16 @@ func performJsonTest(t *testing.T, binder handlerFunc, testCase jsonTestCase) {
 		jsonTestHandler := func(actual interface{}, errs Errors) {
 			if fnName == "JSON" {
 				if testCase.shouldSucceedOnJson {
-					assert.EqualValues(t, 0, len(errs), errs)
+					assert.Empty(t, errs, errs)
 					assert.EqualValues(t, fmt.Sprintf("%+v", testCase.expected), fmt.Sprintf("%+v", actual))
 				} else {
-					assert.NotEqual(t, 0, len(errs))
+					assert.NotEmpty(t, errs)
 				}
 			} else if fnName == "Bind" {
 				if !testCase.shouldFailOnBind {
-					assert.EqualValues(t, 0, len(errs), errs)
+					assert.Empty(t, errs, errs)
 				} else {
-					assert.NotEqual(t, 0, len(errs))
+					assert.NotEmpty(t, errs)
 					assert.EqualValues(t, fmt.Sprintf("%+v", testCase.expected), fmt.Sprintf("%+v", actual))
 				}
 			}
@@ -182,7 +182,7 @@ func performJsonTest(t *testing.T, binder handlerFunc, testCase jsonTestCase) {
 				m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
 					var actual Post
 					errs := binder(req, &actual)
-					assert.EqualValues(t, actual.Title, testCase.expected.(Post).Title)
+					assert.EqualValues(t, testCase.expected.(Post).Title, actual.Title)
 					jsonTestHandler(actual, errs)
 				})
 			} else {
@@ -198,7 +198,7 @@ func performJsonTest(t *testing.T, binder handlerFunc, testCase jsonTestCase) {
 				m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
 					var actual BlogPost
 					errs := binder(req, &actual)
-					assert.EqualValues(t, actual.Title, testCase.expected.(BlogPost).Title)
+					assert.EqualValues(t, testCase.expected.(BlogPost).Title, actual.Title)
 					jsonTestHandler(actual, errs)
 				})
 			} else {
@@ -213,7 +213,7 @@ func performJsonTest(t *testing.T, binder handlerFunc, testCase jsonTestCase) {
 				m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
 					var actual Group
 					errs := binder(req, &actual)
-					assert.EqualValues(t, actual.Name, testCase.expected.(Group).Name)
+					assert.EqualValues(t, testCase.expected.(Group).Name, actual.Name)
 					jsonTestHandler(actual, errs)
 				})
 			} else {
@@ -248,7 +248,7 @@ func performJsonTest(t *testing.T, binder handlerFunc, testCase jsonTestCase) {
 			if testCase.shouldSucceedOnJson &&
 				httpRecorder.Code != http.StatusOK &&
 				!testCase.shouldFailOnBind {
-				assert.EqualValues(t, httpRecorder.Code, http.StatusOK)
+				assert.EqualValues(t, http.StatusOK, httpRecorder.Code)
 			}
 		}
 	})

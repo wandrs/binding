@@ -78,7 +78,7 @@ func performFileTest(t *testing.T, binder handlerFunc, testCase fileTestCase) {
 
 	fileTestHandler := func(actual BlogPost, errs Errors) {
 		assertFileAsExpected(t, testCase, actual.HeaderImage, testCase.singleFile)
-		assert.EqualValues(t, len(testCase.multipleFiles), len(actual.Pictures))
+		assert.Len(t, actual.Pictures, len(testCase.multipleFiles))
 
 		for i, expectedFile := range testCase.multipleFiles {
 			if i >= len(actual.Pictures) {
@@ -117,8 +117,8 @@ func assertFileAsExpected(t *testing.T, testCase fileTestCase, actual *multipart
 		return
 	}
 
-	assert.EqualValues(t, actual.Filename, expected.fileName)
-	assert.EqualValues(t, unpackFileHeaderData(actual), expected.data)
+	assert.EqualValues(t, expected.fileName, actual.Filename)
+	assert.EqualValues(t, expected.data, unpackFileHeaderData(actual))
 }
 
 func buildRequestWithFile(testCase fileTestCase) *http.Request {
