@@ -37,11 +37,11 @@ var fileTestCases = []fileTestCase{
 	{
 		description: "Multiple files",
 		multipleFiles: []*fileInfo{
-			&fileInfo{
+			{
 				fileName: "cool-gopher-fact.txt",
 				data:     "Did you know? https://plus.google.com/+MatthewHolt/posts/GmVfd6TPJ51",
 			},
-			&fileInfo{
+			{
 				fileName: "gophercon2014.txt",
 				data:     "@bradfitz has a Go time machine: https://twitter.com/mholt6/status/459463953395875840",
 			},
@@ -54,11 +54,11 @@ var fileTestCases = []fileTestCase{
 			data:     "Hey, you should follow @mholt6 (Twitter) or +MatthewHolt (Google+)",
 		},
 		multipleFiles: []*fileInfo{
-			&fileInfo{
+			{
 				fileName: "thank you!",
 				data:     "Also, thanks to all the contributors of this package!",
 			},
-			&fileInfo{
+			{
 				fileName: "btw...",
 				data:     "This tool translates JSON into Go structs: http://mholt.github.io/json-to-go/",
 			},

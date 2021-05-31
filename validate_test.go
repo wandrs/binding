@@ -161,7 +161,7 @@ var validationTestCases = []validationTestCase{
 	{
 		description: "List Validation",
 		data: []BlogPost{
-			BlogPost{
+			{
 				Id: 1,
 				Post: Post{
 					Title:   "First Post",
@@ -171,7 +171,7 @@ var validationTestCases = []validationTestCase{
 					Name: "Leeor Aharon",
 				},
 			},
-			BlogPost{
+			{
 				Id: 2,
 				Post: Post{
 					Title:   "Second Post",
@@ -187,7 +187,7 @@ var validationTestCases = []validationTestCase{
 	{
 		description: "List Validation w/ Errors",
 		data: []BlogPost{
-			BlogPost{
+			{
 				Id: 1,
 				Post: Post{
 					Title:   "First Post",
@@ -197,7 +197,7 @@ var validationTestCases = []validationTestCase{
 					Name: "Leeor Aharon",
 				},
 			},
-			BlogPost{
+			{
 				Id: 2,
 				Post: Post{
 					Title:   "Too Short",
@@ -219,7 +219,7 @@ var validationTestCases = []validationTestCase{
 	{
 		description: "List of invalid custom validations",
 		data: []SadForm{
-			SadForm{
+			{
 				AlphaDash:    ",",
 				AlphaDashDot: ",",
 				Size:         "123",
@@ -324,7 +324,7 @@ var validationTestCases = []validationTestCase{
 	{
 		description: "List of valid custom validations",
 		data: []SadForm{
-			SadForm{
+			{
 				AlphaDash:    "123-456",
 				AlphaDashDot: "123.456",
 				Size:         "1",
@@ -347,8 +347,8 @@ var validationTestCases = []validationTestCase{
 		data: Group{
 			Name: "group1",
 			People: []Person{
-				Person{Name: "anthony"},
-				Person{Name: "awoods"},
+				{Name: "anthony"},
+				{Name: "awoods"},
 			},
 		},
 		expectedErrors: Errors{},
@@ -358,8 +358,8 @@ var validationTestCases = []validationTestCase{
 		data: Group{
 			Name: "group1",
 			People: []Person{
-				Person{Name: "anthony"},
-				Person{Name: ""},
+				{Name: "anthony"},
+				{Name: ""},
 			},
 		},
 		expectedErrors: Errors{

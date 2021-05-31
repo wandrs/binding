@@ -116,14 +116,14 @@ var jsonTestCases = []jsonTestCase{
 		shouldSucceedOnJson: true,
 		payload:             `[{"title": "First Post"}, {"title": "Second Post"}]`,
 		contentType:         _JSON_CONTENT_TYPE,
-		expected:            []Post{Post{Title: "First Post"}, Post{Title: "Second Post"}},
+		expected:            []Post{{Title: "First Post"}, {Title: "Second Post"}},
 	},
 	{
 		description:         "Slice of structs",
 		shouldSucceedOnJson: true,
 		payload:             `{"name": "group1", "people": [{"name":"awoods"}, {"name": "anthony"}]}`,
 		contentType:         _JSON_CONTENT_TYPE,
-		expected:            Group{Name: "group1", People: []Person{Person{Name: "awoods"}, Person{Name: "anthony"}}},
+		expected:            Group{Name: "group1", People: []Person{{Name: "awoods"}, {Name: "anthony"}}},
 	},
 }
 

@@ -29,9 +29,11 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/goccy/go-json"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/unknwon/com"
 )
+
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 // Bind wraps up the functionality of the Form and Json middleware
 // according to the Content-Type and verb of the request.

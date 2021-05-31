@@ -36,7 +36,7 @@ func Test_SetWithProperType(t *testing.T) {
 	}
 
 	expectedOutputs := map[string]Everything{
-		"successful": Everything{
+		"successful": {
 			Integer:    -1,
 			Integer8:   -8,
 			Integer16:  -16,
@@ -52,7 +52,7 @@ func Test_SetWithProperType(t *testing.T) {
 			Fl64_1:     -64.6464646464,
 			Str:        "string",
 		},
-		"errorful": Everything{},
+		"errorful": {},
 	}
 
 	for key, testCase := range testInputs {
