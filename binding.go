@@ -29,6 +29,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/gorilla/schema"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/unknwon/com"
 )
@@ -167,16 +168,33 @@ func MultipartForm(req *http.Request, formStruct interface{}) Errors {
 // validated, but no error handling is actually performed here.
 // An interface pointer can be added as a second argument in order
 // to map the struct to a specific interface.
+//
+// For all requests, Json parses the raw query from the URL using matching struct json tags.
+//
+// For POST, PUT, and PATCH requests, it also parses the request body.
+// Request body parameters take precedence over URL query string values.
+//
+// Json follows the Request.ParseForm() method from Go's net/http library.
+// ref: https://github.com/golang/go/blob/700e969d5b23732179ea86cfe67e8d1a0a1cc10a/src/net/http/request.go#L1176
 func JSON(req *http.Request, jsonStruct interface{}) Errors {
 	var errors Errors
 	ensurePointer(jsonStruct)
 
-	if req.Body != nil {
-		defer req.Body.Close()
-		err := json.NewDecoder(req.Body).Decode(jsonStruct)
-		if err != nil && err != io.EOF {
-			errors.Add([]string{}, ERR_DESERIALIZATION, err.Error())
+	var err error
+	if req.URL != nil {
+		if params := req.URL.Query(); len(params) > 0 {
+			d := schema.NewDecoder()
+			d.SetAliasTag("json")
+			err = d.Decode(jsonStruct, params)
 		}
+	}
+	if req.Method == http.MethodPost || req.Method == http.MethodPut || req.Method == http.MethodPatch {
+		if req.Body != nil && (err == nil || err == io.EOF) {
+			err = json.NewDecoder(req.Body).Decode(jsonStruct)
+		}
+	}
+	if err != nil && err != io.EOF {
+		errors.Add([]string{}, ERR_DESERIALIZATION, err.Error())
 	}
 	return append(errors, Validate(req, jsonStruct)...)
 }
