@@ -8,4 +8,5 @@ require (
 	github.com/json-iterator/go v1.1.11
 	github.com/stretchr/testify v1.3.0
 	github.com/unknwon/com v1.0.1
+	go.wandrs.dev/inject v0.0.0-20210615003440-96c9194068f9
 )
