@@ -17,6 +17,7 @@ package binding
 
 import (
 	"fmt"
+	"github.com/unrolled/render"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -139,6 +140,7 @@ func performJsonTest(t *testing.T, binder handlerFunc, testCase jsonTestCase) {
 		var payload io.Reader
 		httpRecorder := httptest.NewRecorder()
 		m := chi.NewRouter()
+		m.Use(Injector(render.New()))
 
 		jsonTestHandler := func(actual interface{}, errs Errors) {
 			if fnName == "JSON" {

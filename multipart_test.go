@@ -18,6 +18,7 @@ package binding
 import (
 	"bytes"
 	"fmt"
+	"github.com/unrolled/render"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -81,6 +82,7 @@ func Test_MultipartForm(t *testing.T) {
 func performMultipartFormTest(t *testing.T, binder handlerFunc, testCase multipartFormTestCase) {
 	httpRecorder := httptest.NewRecorder()
 	m := chi.NewRouter()
+	m.Use(Injector(render.New()))
 
 	m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
 		var actual BlogPost

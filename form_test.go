@@ -17,6 +17,7 @@ package binding
 
 import (
 	"fmt"
+	"github.com/unrolled/render"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -151,18 +152,6 @@ var formTestCases = []formTestCase{
 	},
 }
 
-func init() {
-	AddRule(&Rule{
-		func(rule string) bool {
-			return rule == "CustomRule"
-		},
-		func(errs Errors, _ string, _ interface{}) (bool, Errors) {
-			return false, errs
-		},
-	})
-	SetNameMapper(nameMapper)
-}
-
 func Test_Form(t *testing.T) {
 	for _, testCase := range formTestCases {
 		t.Run(testCase.description, func(t *testing.T) {
@@ -174,6 +163,7 @@ func Test_Form(t *testing.T) {
 func performFormTest(t *testing.T, binder handlerFunc, testCase formTestCase) {
 	resp := httptest.NewRecorder()
 	m := chi.NewRouter()
+	m.Use(Injector(render.New()))
 
 	formTestHandler := func(actual interface{}, errs Errors) {
 		if testCase.shouldSucceed {
@@ -287,6 +277,8 @@ type defaultForm struct {
 
 func Test_Default(t *testing.T) {
 	m := chi.NewRouter()
+	m.Use(Injector(render.New()))
+
 	m.Get("/", func(resp http.ResponseWriter, req *http.Request) {
 		var f defaultForm
 		Bind(req, &f)

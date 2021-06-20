@@ -20,6 +20,11 @@ import (
 	"net/http"
 )
 
+const (
+	_JSON_CONTENT_TYPE          = "application/json; charset=utf-8"
+	STATUS_UNPROCESSABLE_ENTITY = 422
+)
+
 // These types are mostly contrived examples, but they're used
 // across many test cases. The idea is to cover all the scenarios
 // that this binding package might encounter in actual use.
@@ -82,12 +87,8 @@ type (
 		People []Person `json:"people" binding:"MinSize(1)"`
 	}
 
-	CustomErrorHandle struct {
-		Rule `binding:"CustomRule"`
-	}
-
 	// The common function signature of the handlers going under test.
-	handlerFunc func(req *http.Request, obj interface{}) Errors
+	handlerFunc func(next http.Handler) http.Handler
 
 	// Used for testing mapping an interface to the context
 	// If used (withInterface = true in the testCases), a modeler

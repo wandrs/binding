@@ -17,6 +17,7 @@ package binding
 
 import (
 	"fmt"
+	"github.com/unrolled/render"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -58,6 +59,7 @@ func Test_SetWithProperType(t *testing.T) {
 	for key, testCase := range testInputs {
 		httpRecorder := httptest.NewRecorder()
 		m := chi.NewRouter()
+		m.Use(Injector(render.New()))
 
 		m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
 			var actual Everything
