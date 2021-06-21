@@ -10,6 +10,7 @@ import (
 	httpw "go.wandrs.dev/http"
 	"go.wandrs.dev/inject"
 
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/unrolled/render"
 )
 
@@ -38,10 +39,13 @@ func Injector(r *render.Render) func(next http.Handler) http.Handler {
 			ctx := context.WithValue(req.Context(), injectorKey{}, injector)
 			req = req.WithContext(ctx)
 
-			injector.Map(ctx)
+			injector.MapTo(ctx, (*context.Context)(nil))
 			injector.Map(req)
-			injector.Map(w)
-			injector.Map(httpw.NewResponseWriter(w, req, r))
+			injector.MapTo(w, (*http.ResponseWriter)(nil))
+			if ww, ok := w.(middleware.WrapResponseWriter); ok {
+				injector.MapTo(ww, (*middleware.WrapResponseWriter)(nil))
+			}
+			injector.MapTo(httpw.NewResponseWriter(w, req, r), (*httpw.ResponseWriter)(nil))
 
 			// Serve the request and once its done, put the request context back in the sync pool
 			next.ServeHTTP(w, req)
@@ -114,8 +118,7 @@ func Set(typ reflect.Type, val reflect.Value) func(next http.Handler) http.Handl
 }
 
 var (
-	errorType          = reflect.TypeOf((*error)(nil)).Elem()
-	responseWriterType = reflect.TypeOf((*httpw.ResponseWriter)(nil)).Elem()
+	errorType = reflect.TypeOf((*error)(nil)).Elem()
 )
 
 // github.com/go-macaron/macaron/return_handler.go
@@ -157,16 +160,19 @@ func HandlerFunc(fn interface{}) http.HandlerFunc {
 		if injector == nil {
 			panic("chi: register Injector middleware")
 		}
-		injector.Map(req.Context()) // make sure we have the latest Context
+		injector.MapTo(req.Context(), (*context.Context)(nil)) // make sure we have the latest Context
 
 		results, err := injector.Invoke(fn)
 		if err != nil {
 			panic(fmt.Sprintf("failed to invoke %s, reason: %v", typ.String(), err))
 		}
 
-		ww := injector.GetVal(responseWriterType).Interface().(httpw.ResponseWriter)
+		ww := injector.GetVal(inject.InterfaceOf((*httpw.ResponseWriter)(nil))).Interface().(httpw.ResponseWriter)
 		switch len(results) {
 		case 0:
+			if !ww.Written() {
+				panic(fmt.Sprintf("fn %s must write to ResponseWriter, since it returns nothing", typ))
+			}
 			return // nothing returned, assuming function directly wrote to http.ResponseWriter
 		case 1:
 			if firstReturnIsErr {
@@ -195,7 +201,8 @@ func HandlerFunc(fn interface{}) http.HandlerFunc {
 			return
 		case 2:
 			err, _ := results[1].Interface().(error)
-			if err != nil {
+			// WARNING: https://stackoverflow.com/a/46275411/244009
+			if err != nil && !reflect.ValueOf(err).IsNil() {
 				ww.APIError(err)
 				return
 			}
@@ -224,15 +231,6 @@ func HandlerFunc(fn interface{}) http.HandlerFunc {
 			panic(fmt.Sprintf("received %d return values, can only handle upto 2 return values", len(results)))
 		}
 	}
-}
-
-func canDeref(val reflect.Value) bool {
-	return val.Kind() == reflect.Interface || val.Kind() == reflect.Ptr
-}
-
-func isError(val reflect.Value) bool {
-	_, ok := val.Interface().(error)
-	return ok
 }
 
 func isByteSlice(val reflect.Value) bool {
