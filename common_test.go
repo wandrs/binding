@@ -13,12 +13,18 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 
-package binding
+package binding_test
 
 import (
-	"mime/multipart"
 	"net/http"
 )
+
+const (
+	testRoute       = "/test"
+	formContentType = "application/x-www-form-urlencoded"
+)
+
+type binderFunc func(obj interface{}, ifacePtr ...interface{}) func(next http.Handler) http.Handler
 
 // These types are mostly contrived examples, but they're used
 // across many test cases. The idea is to cover all the scenarios
@@ -26,14 +32,14 @@ import (
 type (
 	// For basic test cases with a required field
 	Post struct {
-		Title   string `form:"title" json:"title" binding:"Required"`
-		Content string `form:"content" json:"content"`
+		Title   string `json:"title" form:"title" validate:"required"`
+		Content string `json:"content" form:"content"`
 	}
 
 	// To be used as a nested struct (with a required field)
 	Person struct {
-		Name  string `form:"name" json:"name" binding:"Required"`
-		Email string `form:"email" json:"email"`
+		Name  string `json:"name" form:"name" validate:"required"`
+		Email string `json:"email,omitempty" form:"email"`
 	}
 
 	// For advanced test cases: multiple values, embedded
@@ -41,53 +47,22 @@ type (
 	// and multiple file uploads
 	BlogPost struct {
 		Post
-		Id          int     `binding:"Required"` // JSON not specified here for test coverage
-		Ignored     string  `form:"-" json:"-"`
-		Ratings     []int   `form:"rating" json:"ratings"`
-		Author      Person  `json:"author"`
-		Coauthor    *Person `json:"coauthor"`
-		HeaderImage *multipart.FileHeader
-		Pictures    []*multipart.FileHeader `form:"picture"`
-		unexported  string                  `form:"unexported"`
+		Id         int     `form:"id" validate:"required"` // JSON not specified here for test coverage
+		Ignored    string  `json:"-" form:"-"`
+		Ratings    []int   `json:"ratings" form:"rating"`
+		Author     Person  `json:"author" form:"author"`
+		Coauthor   *Person `json:"coauthor"`
+		unexported string  `form:"unexported"` //nolint
 	}
 
 	EmbedPerson struct {
 		*Person
 	}
 
-	SadForm struct {
-		AlphaDash    string   `form:"AlphaDash" binding:"AlphaDash"`
-		AlphaDashDot string   `form:"AlphaDashDot" binding:"AlphaDashDot"`
-		Size         string   `form:"Size" binding:"Size(1)"`
-		SizeSlice    []string `form:"SizeSlice" binding:"Size(1)"`
-		MinSize      string   `form:"MinSize" binding:"MinSize(5)"`
-		MinSizeSlice []string `form:"MinSizeSlice" binding:"MinSize(5)"`
-		MaxSize      string   `form:"MaxSize" binding:"MaxSize(1)"`
-		MaxSizeSlice []string `form:"MaxSizeSlice" binding:"MaxSize(1)"`
-		Range        int      `form:"Range" binding:"Range(1,2)"`
-		RangeInvalid int      `form:"RangeInvalid" binding:"Range(1)"`
-		Email        string   `binding:"Email"`
-		Url          string   `form:"Url" binding:"Url"`
-		UrlEmpty     string   `form:"UrlEmpty" binding:"Url"`
-		In           string   `form:"In" binding:"Default(0);In(1,2,3)"`
-		InInvalid    string   `form:"InInvalid" binding:"In(1,2,3)"`
-		NotIn        string   `form:"NotIn" binding:"NotIn(1,2,3)"`
-		Include      string   `form:"Include" binding:"Include(a)"`
-		Exclude      string   `form:"Exclude" binding:"Exclude(a)"`
-		Empty        string   `binding:"OmitEmpty"`
-	}
-
 	Group struct {
-		Name   string   `json:"name" binding:"Required"`
-		People []Person `json:"people" binding:"MinSize(1)"`
+		Name   string   `json:"name" validate:"required"`
+		People []Person `json:"people" validate:"min=1"`
 	}
-
-	CustomErrorHandle struct {
-		Rule `binding:"CustomRule"`
-	}
-
-	// The common function signature of the handlers going under test.
-	handlerFunc func(req *http.Request, obj interface{}) Errors
 
 	// Used for testing mapping an interface to the context
 	// If used (withInterface = true in the testCases), a modeler
@@ -99,17 +74,6 @@ type (
 	}
 )
 
-func (p Post) Validate(req *http.Request, errs Errors) Errors {
-	if len(p.Title) < 10 {
-		errs = append(errs, Error{
-			FieldNames:     []string{"title"},
-			Classification: "LengthError",
-			Message:        "Life is too short",
-		})
-	}
-	return errs
-}
-
 func (p Post) Model() string {
 	return p.Title
 }
@@ -117,8 +81,3 @@ func (p Post) Model() string {
 func (g Group) Model() string {
 	return g.Name
 }
-
-const (
-	testRoute       = "/test"
-	formContentType = "application/x-www-form-urlencoded"
-)

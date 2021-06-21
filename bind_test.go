@@ -13,34 +13,30 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 
-package binding
+package binding_test
 
 import (
 	"testing"
+
+	"go.wandrs.dev/binding"
 )
 
 func Test_Bind(t *testing.T) {
 	t.Run("Bind form", func(t *testing.T) {
 		for _, testCase := range formTestCases {
-			performFormTest(t, Bind, testCase)
+			performFormTest(t, binding.Bind, testCase)
 		}
 	})
 
 	t.Run("Bind JSON", func(t *testing.T) {
 		for _, testCase := range jsonTestCases {
-			performJsonTest(t, Bind, testCase)
+			performJSONTest(t, binding.Bind, testCase)
 		}
 	})
 
 	t.Run("Bind multipart form", func(t *testing.T) {
 		for _, testCase := range multipartFormTestCases {
-			performMultipartFormTest(t, Bind, testCase)
-		}
-	})
-
-	t.Run("Bind with file", func(t *testing.T) {
-		for _, testCase := range fileTestCases {
-			performFileTest(t, Bind, testCase)
+			performMultipartFormTest(t, binding.Bind, testCase)
 		}
 	})
 }

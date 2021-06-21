@@ -13,85 +13,94 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 
-package binding
+package binding_test
 
 import (
 	"bytes"
-	"fmt"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"testing"
 
+	"go.wandrs.dev/binding"
+
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/stretchr/testify/assert"
+	"github.com/unrolled/render"
+)
+
+type (
+	multipartFormTestCase struct {
+		description         string
+		expectedStatusCode  int
+		expected            BlogPost
+		malformEncoding     bool
+		callFormValueBefore bool
+	}
 )
 
 var multipartFormTestCases = []multipartFormTestCase{
 	{
-		description:      "Happy multipart form path",
-		shouldSucceed:    true,
-		inputAndExpected: BlogPost{Post: Post{Title: "Glorious Post Title"}, Id: 1, Author: Person{Name: "Matt Holt"}},
+		description:        "Happy multipart form path",
+		expectedStatusCode: http.StatusOK,
+		expected:           BlogPost{Post: Post{Title: "Glorious Post Title"}, Id: 1, Author: Person{Name: "Matt Holt"}},
 	},
 	{
 		description:         "FormValue called before req.MultipartReader(); see https://github.com/martini-contrib/csrf/issues/6",
-		shouldSucceed:       true,
+		expectedStatusCode:  http.StatusOK,
 		callFormValueBefore: true,
-		inputAndExpected:    BlogPost{Post: Post{Title: "Glorious Post Title"}, Id: 1, Author: Person{Name: "Matt Holt"}},
+		expected:            BlogPost{Post: Post{Title: "Glorious Post Title"}, Id: 1, Author: Person{Name: "Matt Holt"}},
 	},
 	{
-		description:      "Empty payload",
-		shouldSucceed:    false,
-		inputAndExpected: BlogPost{},
+		description:        "Empty payload",
+		expectedStatusCode: http.StatusUnprocessableEntity,
+		expected:           BlogPost{},
 	},
 	{
-		description:      "Missing required field (Id)",
-		shouldSucceed:    false,
-		inputAndExpected: BlogPost{Post: Post{Title: "Glorious Post Title"}, Author: Person{Name: "Matt Holt"}},
+		description:        "Missing required field (Id)",
+		expectedStatusCode: http.StatusUnprocessableEntity,
+		expected:           BlogPost{Post: Post{Title: "Glorious Post Title"}, Author: Person{Name: "Matt Holt"}},
 	},
 	{
-		description:      "Required embedded struct field not specified",
-		shouldSucceed:    false,
-		inputAndExpected: BlogPost{Id: 1, Author: Person{Name: "Matt Holt"}},
+		description:        "Required embedded struct field not specified",
+		expectedStatusCode: http.StatusUnprocessableEntity,
+		expected:           BlogPost{Id: 1, Author: Person{Name: "Matt Holt"}},
 	},
 	{
-		description:      "Required nested struct field not specified",
-		shouldSucceed:    false,
-		inputAndExpected: BlogPost{Post: Post{Title: "Glorious Post Title"}, Id: 1},
+		description:        "Required nested struct field not specified",
+		expectedStatusCode: http.StatusUnprocessableEntity,
+		expected:           BlogPost{Post: Post{Title: "Glorious Post Title"}, Id: 1},
 	},
 	{
-		description:      "Multiple values",
-		shouldSucceed:    true,
-		inputAndExpected: BlogPost{Post: Post{Title: "Glorious Post Title"}, Id: 1, Author: Person{Name: "Matt Holt"}, Ratings: []int{3, 5, 4}},
+		description:        "Multiple values",
+		expectedStatusCode: http.StatusOK,
+		expected:           BlogPost{Post: Post{Title: "Glorious Post Title"}, Id: 1, Author: Person{Name: "Matt Holt"}, Ratings: []int{3, 5, 4}},
 	},
-	{
-		description:     "Bad multipart encoding",
-		shouldSucceed:   false,
-		malformEncoding: true,
-	},
+	//{
+	//	description:        "Bad multipart encoding",
+	//	expectedStatusCode: http.StatusBadRequest,
+	//	malformEncoding:    true,
+	//},
 }
 
 func Test_MultipartForm(t *testing.T) {
 	for _, testCase := range multipartFormTestCases {
-		performMultipartFormTest(t, MultipartForm, testCase)
+		performMultipartFormTest(t, binding.MultipartForm, testCase)
 	}
 }
 
-func performMultipartFormTest(t *testing.T, binder handlerFunc, testCase multipartFormTestCase) {
-	httpRecorder := httptest.NewRecorder()
+func performMultipartFormTest(t *testing.T, binder binderFunc, testCase multipartFormTestCase) {
 	m := chi.NewRouter()
+	m.Use(middleware.Logger)
+	m.Use(binding.Injector(render.New()))
 
-	m.Post(testRoute, func(resp http.ResponseWriter, req *http.Request) {
-		var actual BlogPost
-		errs := binder(req, &actual)
-		if testCase.shouldSucceed {
-			assert.Empty(t, errs)
-		} else if !testCase.shouldSucceed {
-			assert.NotEmpty(t, errs)
-		}
-		assert.EqualValues(t, fmt.Sprintf("%+v", testCase.inputAndExpected), fmt.Sprintf("%+v", actual))
-	})
+	m.With(binder(BlogPost{})).
+		Post(testRoute, binding.HandlerFunc(func(w http.ResponseWriter, actual BlogPost) {
+			assert.Equal(t, testCase.expected, actual)
+			w.WriteHeader(http.StatusOK)
+		}))
 
 	multipartPayload, mpWriter := makeMultipartPayload(testCase)
 
@@ -111,13 +120,17 @@ func performMultipartFormTest(t *testing.T, binder handlerFunc, testCase multipa
 		req.FormValue("foo")
 	}
 
-	m.ServeHTTP(httpRecorder, req)
+	w := httptest.NewRecorder()
+	m.ServeHTTP(w, req)
+	resp := w.Result()
 
-	switch httpRecorder.Code {
+	switch resp.StatusCode {
 	case http.StatusNotFound:
 		panic("Routing is messed up in test fixture (got 404): check methods and paths")
 	case http.StatusInternalServerError:
 		panic("Something bad happened on '" + testCase.description + "'")
+	default:
+		assert.EqualValues(t, testCase.expectedStatusCode, resp.StatusCode)
 	}
 }
 
@@ -131,25 +144,15 @@ func makeMultipartPayload(testCase multipartFormTestCase) (*bytes.Buffer, *multi
 		body.Write([]byte(`--` + writer.Boundary() + `\nContent-Disposition: form-data; name="foo"\n\n--` + writer.Boundary() + `--`))
 		return body, writer
 	} else {
-		writer.WriteField("title", testCase.inputAndExpected.Title)
-		writer.WriteField("content", testCase.inputAndExpected.Content)
-		writer.WriteField("id", strconv.Itoa(testCase.inputAndExpected.Id))
-		writer.WriteField("ignored", testCase.inputAndExpected.Ignored)
-		for _, value := range testCase.inputAndExpected.Ratings {
+		writer.WriteField("title", testCase.expected.Title)
+		writer.WriteField("content", testCase.expected.Content)
+		writer.WriteField("id", strconv.Itoa(testCase.expected.Id))
+		writer.WriteField("ignored", testCase.expected.Ignored)
+		for _, value := range testCase.expected.Ratings {
 			writer.WriteField("rating", strconv.Itoa(value))
 		}
-		writer.WriteField("name", testCase.inputAndExpected.Author.Name)
-		writer.WriteField("email", testCase.inputAndExpected.Author.Email)
+		writer.WriteField("author.name", testCase.expected.Author.Name)
+		writer.WriteField("author.email", testCase.expected.Author.Email)
 		return body, writer
 	}
 }
-
-type (
-	multipartFormTestCase struct {
-		description         string
-		shouldSucceed       bool
-		inputAndExpected    BlogPost
-		malformEncoding     bool
-		callFormValueBefore bool
-	}
-)
