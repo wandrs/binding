@@ -22,16 +22,16 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/unrolled/render"
 	"go.wandrs.dev/binding"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/stretchr/testify/assert"
+	"github.com/unrolled/render"
 )
 
 const (
-	_JSON_CONTENT_TYPE = "application/json; charset=utf-8"
+	jsonContentType = "application/json; charset=utf-8"
 )
 
 type (
@@ -51,7 +51,7 @@ var jsonTestCases = []jsonTestCase{
 		description:        "Happy path",
 		expectedStatusCode: http.StatusOK,
 		payload:            `{"title": "Glorious Post Title", "content": "Lorem ipsum dolor sit amet"}`,
-		contentType:        _JSON_CONTENT_TYPE,
+		contentType:        jsonContentType,
 		expected:           Post{Title: "Glorious Post Title", Content: "Lorem ipsum dolor sit amet"},
 	},
 	{
@@ -59,21 +59,21 @@ var jsonTestCases = []jsonTestCase{
 		expectedStatusCode: http.StatusOK,
 		withInterface:      true,
 		payload:            `{"title": "Glorious Post Title", "content": "Lorem ipsum dolor sit amet"}`,
-		contentType:        _JSON_CONTENT_TYPE,
+		contentType:        jsonContentType,
 		expected:           Post{Title: "Glorious Post Title", Content: "Lorem ipsum dolor sit amet"},
 	},
 	{
 		description:        "Nil payload",
 		expectedStatusCode: http.StatusUnprocessableEntity,
 		payload:            `-nil-`,
-		contentType:        _JSON_CONTENT_TYPE,
+		contentType:        jsonContentType,
 		expected:           Post{},
 	},
 	{
 		description:        "Empty payload",
 		expectedStatusCode: http.StatusUnprocessableEntity,
 		payload:            ``,
-		contentType:        _JSON_CONTENT_TYPE,
+		contentType:        jsonContentType,
 		expected:           Post{},
 	},
 	{
@@ -96,14 +96,14 @@ var jsonTestCases = []jsonTestCase{
 		description:        "Malformed JSON",
 		expectedStatusCode: http.StatusBadRequest,
 		payload:            `{"title":"foo"`,
-		contentType:        _JSON_CONTENT_TYPE,
+		contentType:        jsonContentType,
 		expected:           Post{Title: "foo"},
 	},
 	{
 		description:        "Deserialization with nested and embedded struct",
 		expectedStatusCode: http.StatusOK,
 		payload:            `{"title":"Glorious Post Title", "id":1, "author":{"name":"Matt Holt"}}`,
-		contentType:        _JSON_CONTENT_TYPE,
+		contentType:        jsonContentType,
 		expected:           BlogPost{Post: Post{Title: "Glorious Post Title"}, Id: 1, Author: Person{Name: "Matt Holt"}},
 	},
 	{
@@ -111,35 +111,35 @@ var jsonTestCases = []jsonTestCase{
 		expectedStatusCode: http.StatusOK,
 		withInterface:      true,
 		payload:            `{"title":"Glorious Post Title", "id":1, "author":{"name":"Matt Holt"}}`,
-		contentType:        _JSON_CONTENT_TYPE,
+		contentType:        jsonContentType,
 		expected:           BlogPost{Post: Post{Title: "Glorious Post Title"}, Id: 1, Author: Person{Name: "Matt Holt"}},
 	},
 	{
 		description:        "Required nested struct field not specified",
 		expectedStatusCode: http.StatusUnprocessableEntity,
 		payload:            `{"title":"Glorious Post Title", "id":1, "author":{}}`,
-		contentType:        _JSON_CONTENT_TYPE,
+		contentType:        jsonContentType,
 		expected:           BlogPost{Post: Post{Title: "Glorious Post Title"}, Id: 1},
 	},
 	{
 		description:        "Required embedded struct field not specified",
 		expectedStatusCode: http.StatusUnprocessableEntity,
 		payload:            `{"id":1, "author":{"name":"Matt Holt"}}`,
-		contentType:        _JSON_CONTENT_TYPE,
+		contentType:        jsonContentType,
 		expected:           BlogPost{Id: 1, Author: Person{Name: "Matt Holt"}},
 	},
 	{
 		description:        "Slice of Posts",
 		expectedStatusCode: http.StatusOK,
 		payload:            `[{"title": "First Post"}, {"title": "Second Post"}]`,
-		contentType:        _JSON_CONTENT_TYPE,
+		contentType:        jsonContentType,
 		expected:           []Post{{Title: "First Post"}, {Title: "Second Post"}},
 	},
 	{
 		description:        "Slice of structs",
 		expectedStatusCode: http.StatusOK,
 		payload:            `{"name": "group1", "people": [{"name":"awoods"}, {"name": "anthony"}]}`,
-		contentType:        _JSON_CONTENT_TYPE,
+		contentType:        jsonContentType,
 		expected:           Group{Name: "group1", People: []Person{{Name: "awoods"}, {Name: "anthony"}}},
 	},
 }

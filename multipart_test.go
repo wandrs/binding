@@ -17,17 +17,18 @@ package binding_test
 
 import (
 	"bytes"
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/unrolled/render"
-	"go.wandrs.dev/binding"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"testing"
 
+	"go.wandrs.dev/binding"
+
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/stretchr/testify/assert"
+	"github.com/unrolled/render"
 )
 
 type (

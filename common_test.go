@@ -59,35 +59,9 @@ type (
 		*Person
 	}
 
-	SadForm struct {
-		AlphaDash string `form:"AlphaDash" validate:"alphanum"`
-		// AlphaDashDot string   `form:"AlphaDashDot" validate:"AlphaDashDot"`
-		Size         string   `form:"Size" validate:"len=1"`
-		SizeSlice    []string `form:"SizeSlice" validate:"len=1"`
-		MinSize      string   `form:"MinSize" validate:"min=5"`
-		MinSizeSlice []string `form:"MinSizeSlice" validate:"min=5"`
-		MaxSize      string   `form:"MaxSize" validate:"max=1"`
-		MaxSizeSlice []string `form:"MaxSizeSlice" validate:"max=1"`
-		Range        int      `form:"Range" validate:"min=1,max=2"`
-		RangeInvalid int      `form:"RangeInvalid" validate:"min=1,max=1"`
-		Email        string   `validate:"email"`
-		Url          string   `form:"Url" validate:"url"`
-		UrlEmpty     string   `form:"UrlEmpty" validate:"url"`
-		In           string   `form:"In,default=0" validate:"oneof=1 2 3"` // https://github.com/go-playground/validator/issues/622
-		InInvalid    string   `form:"InInvalid" validate:"oneof=1 2 3"`
-		NotIn        string   `form:"NotIn" validate:"excludesall=123"`
-		Include      string   `form:"Include" validate:"contains=a"`
-		Exclude      string   `form:"Exclude" validate:"excludes=a"`
-		Empty        string   `validate:"omitempty"`
-	}
-
 	Group struct {
 		Name   string   `json:"name" validate:"required"`
 		People []Person `json:"people" validate:"min=1"`
-	}
-
-	UrlForm struct {
-		Url string `form:"Url" validate:"url"`
 	}
 
 	// Used for testing mapping an interface to the context

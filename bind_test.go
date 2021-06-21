@@ -16,8 +16,9 @@
 package binding_test
 
 import (
-	"go.wandrs.dev/binding"
 	"testing"
+
+	"go.wandrs.dev/binding"
 )
 
 func Test_Bind(t *testing.T) {
