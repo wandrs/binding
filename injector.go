@@ -61,7 +61,7 @@ func Injector(r *render.Render) func(next http.Handler) http.Handler {
 	}
 }
 
-func Inject(fn func(inject.Injector)) func(next http.Handler) http.Handler {
+func Inject(fn func(inject.Injector) error) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			injector, _ := req.Context().Value(injectorKey{}).(inject.Injector)
@@ -69,7 +69,10 @@ func Inject(fn func(inject.Injector)) func(next http.Handler) http.Handler {
 				panic("chi: register Injector middleware")
 			}
 
-			fn(injector)
+			if err := fn(injector); err != nil {
+				responseWriter(injector).APIError(err)
+				return
+			}
 			next.ServeHTTP(w, req)
 		})
 	}
