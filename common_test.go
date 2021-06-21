@@ -47,10 +47,10 @@ type (
 	// and multiple file uploads
 	BlogPost struct {
 		Post
-		Id         int     `validate:"required"` // JSON not specified here for test coverage
+		Id         int     `form:"id" validate:"required"` // JSON not specified here for test coverage
 		Ignored    string  `json:"-" form:"-"`
 		Ratings    []int   `json:"ratings" form:"rating"`
-		Author     Person  `json:"author"`
+		Author     Person  `json:"author" form:"author"`
 		Coauthor   *Person `json:"coauthor"`
 		unexported string  `form:"unexported"` //nolint
 	}
