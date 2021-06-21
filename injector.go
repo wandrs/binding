@@ -167,7 +167,7 @@ func HandlerFunc(fn interface{}) http.HandlerFunc {
 			panic(fmt.Sprintf("failed to invoke %s, reason: %v", typ.String(), err))
 		}
 
-		ww := injector.GetVal(inject.InterfaceOf((*httpw.ResponseWriter)(nil))).Interface().(httpw.ResponseWriter)
+		ww := responseWriter(injector)
 		switch len(results) {
 		case 0:
 			if !ww.Written() {
@@ -181,17 +181,6 @@ func HandlerFunc(fn interface{}) http.HandlerFunc {
 				return
 			}
 
-			// ELSE,
-			// write val[0] in JSON (use content negotiation in future)
-			// nil object
-			// nil slice
-			// []byte
-			// primitive types
-			// objects
-			// slices
-
-			// isNil() ???
-
 			v := results[0]
 			if isByteSlice(v) {
 				_, _ = w.Write(v.Bytes())
@@ -202,23 +191,10 @@ func HandlerFunc(fn interface{}) http.HandlerFunc {
 		case 2:
 			err, _ := results[1].Interface().(error)
 			// WARNING: https://stackoverflow.com/a/46275411/244009
-			if err != nil && !reflect.ValueOf(err).IsNil() {
+			if err != nil && !reflect.ValueOf(err).IsNil() /*for error wrapper interfaces*/ {
 				ww.APIError(err)
 				return
 			}
-
-			// if err == nil
-			// write val[0] in JSON (use content negotiation in future)
-			// nil object
-			// nil slice
-			// []byte
-			// primitive types
-			// objects
-			// slices
-
-			//if isByteSlice(respVal) {
-			//	_, _ = w.Write(respVal.Bytes())
-			//} else {
 
 			v := results[0]
 			if isByteSlice(v) {
@@ -231,6 +207,10 @@ func HandlerFunc(fn interface{}) http.HandlerFunc {
 			panic(fmt.Sprintf("received %d return values, can only handle upto 2 return values", len(results)))
 		}
 	}
+}
+
+func responseWriter(injector inject.Injector) httpw.ResponseWriter {
+	return injector.GetVal(inject.InterfaceOf((*httpw.ResponseWriter)(nil))).Interface().(httpw.ResponseWriter)
 }
 
 func isByteSlice(val reflect.Value) bool {

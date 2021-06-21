@@ -23,7 +23,6 @@ import (
 	"reflect"
 	"strings"
 
-	httpw "go.wandrs.dev/http"
 	"go.wandrs.dev/inject"
 
 	"github.com/go-playground/form/v4"
@@ -81,7 +80,7 @@ func Bind(obj interface{}, ifacePtr ...interface{}) func(next http.Handler) http
 			}
 
 			if err != nil {
-				ww := injector.GetVal(reflect.TypeOf((httpw.ResponseWriter)(nil))).Interface().(httpw.ResponseWriter)
+				ww := responseWriter(injector)
 				ww.APIError(err)
 				return
 			}
@@ -107,7 +106,7 @@ func Form(obj interface{}, ifacePtr ...interface{}) func(next http.Handler) http
 				panic("chi: register Injector middleware")
 			}
 			if err := bindForm(r, injector, obj, ifacePtr...); err != nil {
-				ww := injector.GetVal(reflect.TypeOf((httpw.ResponseWriter)(nil))).Interface().(httpw.ResponseWriter)
+				ww := responseWriter(injector)
 				ww.APIError(err)
 				return
 			}
@@ -118,24 +117,24 @@ func Form(obj interface{}, ifacePtr ...interface{}) func(next http.Handler) http
 
 func bindForm(r *http.Request, injector inject.Injector, obj interface{}, ifacePtr ...interface{}) *apierrors.StatusError {
 	ensureNotPointer(obj)
-	formStruct := reflect.New(reflect.TypeOf(obj))
+	newObj := reflect.New(reflect.TypeOf(obj))
 
 	if err := r.ParseForm(); err != nil {
 		return apierrors.NewBadRequest(err.Error())
 	}
 
 	d := form.NewDecoder()
-	if err := d.Decode(formStruct.Interface(), r.Form); err != nil {
+	if err := d.Decode(newObj.Interface(), r.Form); err != nil {
 		return NewBindingError(err, obj)
 	}
 
-	if err := validate.Struct(formStruct.Interface()); err != nil {
+	if err := check(newObj); err != nil {
 		return NewBindingError(err, obj)
 	}
 
-	injector.Map(formStruct.Elem().Interface())
+	injector.Map(newObj.Elem().Interface())
 	if len(ifacePtr) > 0 {
-		injector.MapTo(formStruct.Elem().Interface(), ifacePtr[0])
+		injector.MapTo(newObj.Elem().Interface(), ifacePtr[0])
 	}
 	return nil
 }
@@ -156,7 +155,7 @@ func MultipartForm(obj interface{}, ifacePtr ...interface{}) func(next http.Hand
 				panic("chi: register Injector middleware")
 			}
 			if err := bindMultipartForm(r, injector, obj, ifacePtr...); err != nil {
-				ww := injector.GetVal(reflect.TypeOf((httpw.ResponseWriter)(nil))).Interface().(httpw.ResponseWriter)
+				ww := responseWriter(injector)
 				ww.APIError(err)
 				return
 			}
@@ -168,7 +167,7 @@ func MultipartForm(obj interface{}, ifacePtr ...interface{}) func(next http.Hand
 func bindMultipartForm(r *http.Request, injector inject.Injector, obj interface{}, ifacePtr ...interface{}) *apierrors.StatusError {
 	ensureNotPointer(obj)
 
-	formStruct := reflect.New(reflect.TypeOf(obj))
+	newObj := reflect.New(reflect.TypeOf(obj))
 	// This if check is necessary due to https://github.com/martini-contrib/csrf/issues/6
 	if r.Form == nil {
 		if err := r.ParseMultipartForm(MaxMemory); err != nil {
@@ -177,17 +176,17 @@ func bindMultipartForm(r *http.Request, injector inject.Injector, obj interface{
 	}
 
 	d := form.NewDecoder()
-	if err := d.Decode(formStruct.Interface(), r.Form); err != nil {
+	if err := d.Decode(newObj.Interface(), r.Form); err != nil {
 		return NewBindingError(err, obj)
 	}
 
-	if err := validate.Struct(formStruct.Interface()); err != nil {
+	if err := check(newObj); err != nil {
 		return NewBindingError(err, obj)
 	}
 
-	injector.Map(formStruct.Elem().Interface())
+	injector.Map(newObj.Elem().Interface())
 	if len(ifacePtr) > 0 {
-		injector.MapTo(formStruct.Elem().Interface(), ifacePtr[0])
+		injector.MapTo(newObj.Elem().Interface(), ifacePtr[0])
 	}
 	return nil
 }
@@ -213,7 +212,7 @@ func JSON(obj interface{}, ifacePtr ...interface{}) func(next http.Handler) http
 				panic("chi: register Injector middleware")
 			}
 			if err := bindJSON(r, injector, obj, ifacePtr...); err != nil {
-				ww := injector.GetVal(reflect.TypeOf((httpw.ResponseWriter)(nil))).Interface().(httpw.ResponseWriter)
+				ww := responseWriter(injector)
 				ww.APIError(err)
 				return
 			}
@@ -224,32 +223,32 @@ func JSON(obj interface{}, ifacePtr ...interface{}) func(next http.Handler) http
 
 func bindJSON(r *http.Request, injector inject.Injector, obj interface{}, ifacePtr ...interface{}) *apierrors.StatusError {
 	ensureNotPointer(obj)
-	jsonStruct := reflect.New(reflect.TypeOf(obj))
+	newObj := reflect.New(reflect.TypeOf(obj))
 
 	if r.URL != nil {
 		if params := r.URL.Query(); len(params) > 0 {
 			d := form.NewDecoder()
 			d.SetTagName("json")
-			if err := d.Decode(jsonStruct.Interface(), params); err != nil {
+			if err := d.Decode(newObj.Interface(), params); err != nil {
 				return NewBindingError(err, obj)
 			}
 		}
 	}
 	if r.Method == http.MethodPost || r.Method == http.MethodPut || r.Method == http.MethodPatch {
 		if r.Body != nil {
-			if err := json.NewDecoder(r.Body).Decode(jsonStruct.Interface()); err != nil && err != io.EOF {
+			if err := json.NewDecoder(r.Body).Decode(newObj.Interface()); err != nil && err != io.EOF {
 				return apierrors.NewBadRequest(err.Error())
 			}
 		}
 	}
 
-	if err := validate.Struct(jsonStruct.Interface()); err != nil {
+	if err := check(newObj); err != nil {
 		return NewBindingError(err, obj)
 	}
 
-	injector.Map(jsonStruct.Elem().Interface())
+	injector.Map(newObj.Elem().Interface())
 	if len(ifacePtr) > 0 {
-		injector.MapTo(jsonStruct.Elem().Interface(), ifacePtr[0])
+		injector.MapTo(newObj.Elem().Interface(), ifacePtr[0])
 	}
 	return nil
 }
@@ -259,4 +258,21 @@ func ensureNotPointer(obj interface{}) {
 	if reflect.TypeOf(obj).Kind() == reflect.Ptr {
 		panic("Pointers are not accepted as binding models")
 	}
+}
+
+func check(val reflect.Value) error {
+	if val.Kind() == reflect.Ptr && !val.IsNil() {
+		val = val.Elem()
+	}
+
+	if val.Kind() == reflect.Struct {
+		return validate.Struct(val.Interface())
+	} else if val.Kind() == reflect.Slice {
+		for i := 0; i < val.Len(); i++ {
+			if err := validate.Struct(val.Index(i).Interface()); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
