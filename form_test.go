@@ -32,6 +32,7 @@ type (
 	formTestCase struct {
 		description        string
 		expectedStatusCode int
+		shouldFailOnBind   bool
 		withInterface      bool
 		queryString        string
 		payload            string
@@ -70,6 +71,7 @@ var formTestCases = []formTestCase{
 	{
 		description:        "Empty content type",
 		expectedStatusCode: http.StatusUnprocessableEntity,
+		shouldFailOnBind:   true,
 		method:             "POST",
 		payload:            `title=Glorious+Post+Title&content=Lorem+ipsum+dolor+sit+amet`,
 		contentType:        ``,
@@ -95,7 +97,7 @@ var formTestCases = []formTestCase{
 		description:        "Required embedded struct field not specified",
 		expectedStatusCode: http.StatusUnprocessableEntity,
 		method:             "POST",
-		payload:            `id=1&name=Matt+Holt`,
+		payload:            `id=1&author.name=Matt+Holt`,
 		contentType:        formContentType,
 		expected:           BlogPost{Id: 1, Author: Person{Name: "Matt Holt"}},
 	},
@@ -230,14 +232,13 @@ func performFormTest(t *testing.T, binder binderFunc, testCase formTestCase) {
 			}))
 	}
 
-	w := httptest.NewRecorder()
-
 	req, err := http.NewRequest(testCase.method, testRoute+testCase.queryString, strings.NewReader(testCase.payload))
 	if err != nil {
 		panic(err)
 	}
 	req.Header.Set("Content-Type", testCase.contentType)
 
+	w := httptest.NewRecorder()
 	m.ServeHTTP(w, req)
 	resp := w.Result()
 
@@ -246,6 +247,10 @@ func performFormTest(t *testing.T, binder binderFunc, testCase formTestCase) {
 		panic("Routing is messed up in test fixture (got 404): check methods and paths")
 	case http.StatusInternalServerError:
 		panic("Something bad happened on '" + testCase.description + "'")
+	case http.StatusUnsupportedMediaType:
+		if !testCase.shouldFailOnBind {
+			panic("expected to fail '" + testCase.description + "'")
+		}
 	default:
 		assert.EqualValues(t, testCase.expectedStatusCode, resp.StatusCode)
 	}

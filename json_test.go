@@ -150,12 +150,6 @@ func Test_JSON(t *testing.T) {
 	}
 }
 
-func Test_BIND_JSON(t *testing.T) {
-	for _, testCase := range jsonTestCases {
-		performJSONTest(t, binding.Bind, testCase)
-	}
-}
-
 func performJSONTest(t *testing.T, binder binderFunc, testCase jsonTestCase) {
 	t.Run(testCase.description, func(t *testing.T) {
 		m := chi.NewRouter()
@@ -231,7 +225,6 @@ func performJSONTest(t *testing.T, binder binderFunc, testCase jsonTestCase) {
 		}
 
 		var payload io.Reader
-		w := httptest.NewRecorder()
 		if testCase.payload == "-nil-" {
 			payload = nil
 		} else {
@@ -244,6 +237,7 @@ func performJSONTest(t *testing.T, binder binderFunc, testCase jsonTestCase) {
 		}
 		req.Header.Set("Content-Type", testCase.contentType)
 
+		w := httptest.NewRecorder()
 		m.ServeHTTP(w, req)
 		resp := w.Result()
 
