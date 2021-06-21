@@ -23,11 +23,18 @@ var pool = sync.Pool{
 type injectorKey struct{}
 
 func Injector(r *render.Render) func(next http.Handler) http.Handler {
+	if r == nil {
+		panic("chi: render must not be nil")
+	}
+
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			// Check if a routing context already exists from a parent router.
 			injector, _ := req.Context().Value(injectorKey{}).(inject.Injector)
 			if injector != nil {
+				// give a chance to override render.Render
+				injector.MapTo(httpw.NewResponseWriter(w, req, r), (*httpw.ResponseWriter)(nil))
+
 				next.ServeHTTP(w, req)
 				return
 			}
