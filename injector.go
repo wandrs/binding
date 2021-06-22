@@ -32,6 +32,10 @@ func Injector(r *render.Render) func(next http.Handler) http.Handler {
 			// Check if a routing context already exists from a parent router.
 			injector, _ := req.Context().Value(injectorKey{}).(inject.Injector)
 			if injector != nil {
+				// in case middleware.Logger is used only for this sub router
+				if ww, ok := w.(middleware.WrapResponseWriter); ok {
+					injector.MapTo(ww, (*middleware.WrapResponseWriter)(nil))
+				}
 				// give a chance to override render.Render
 				injector.MapTo(httpw.NewResponseWriter(w, req, r), (*httpw.ResponseWriter)(nil))
 
@@ -61,6 +65,7 @@ func Injector(r *render.Render) func(next http.Handler) http.Handler {
 	}
 }
 
+// Inject allows injecting new values for a given request
 func Inject(fn func(inject.Injector) error) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -131,7 +136,26 @@ var (
 	errorType = reflect.TypeOf((*error)(nil)).Elem()
 )
 
-// github.com/go-macaron/macaron/return_handler.go
+// HandlerFunc converts a regular function into a net/http handler.
+//
+// This regular function may have 3 possible signatures
+// signature 1:
+//   func doStuff(...)            # must write to http.ResponseWriter
+// signature 2:
+//   func doStuff(...) error      # converted to metav1.Status and written to http.ResponseWriter as a JSON object
+//   func doStuff(...) []byte     # directly written using http.ResponseWriter.Write(bytes)
+//   func doStuff(...) some_value # converted to JSON and written to http.ResponseWriter
+// signature 3:
+//   func doStuff(...) ([]byte, error)
+//   func doStuff(...) (some_value, error)
+//   If an error is returned, then converted to metav1.Status and written to http.ResponseWriter as a JSON object.
+//   Otherwise, []byte is written directly and some_value is converted to JSON and written to http.ResponseWriter
+//
+// Each of these functions can take any injected values as argument including the following pre-injected ones:
+//  - r *http.Request
+//  - w httpw.ResponseWriter # the recommended ResponseWriter as it has helper methods like macaron.Context
+//  - w http.ResponseWriter  # net/http ResponseWriter
+//  - w middleware.WrapResponseWriter # go-chi's ResponseWriter wrapper. Use(middleware.Logger) to inject this.
 func HandlerFunc(fn interface{}) http.HandlerFunc {
 	firstReturnIsErr := false
 
