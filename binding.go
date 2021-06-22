@@ -80,7 +80,7 @@ func Bind(obj interface{}, ifacePtr ...interface{}) func(next http.Handler) http
 			}
 
 			if err != nil {
-				ww := responseWriter(injector)
+				ww := ResponseWriter(injector)
 				ww.APIError(err)
 				return
 			}
@@ -106,7 +106,7 @@ func Form(obj interface{}, ifacePtr ...interface{}) func(next http.Handler) http
 				panic("chi: register Injector middleware")
 			}
 			if err := bindForm(r, injector, obj, ifacePtr...); err != nil {
-				ww := responseWriter(injector)
+				ww := ResponseWriter(injector)
 				ww.APIError(err)
 				return
 			}
@@ -155,7 +155,7 @@ func MultipartForm(obj interface{}, ifacePtr ...interface{}) func(next http.Hand
 				panic("chi: register Injector middleware")
 			}
 			if err := bindMultipartForm(r, injector, obj, ifacePtr...); err != nil {
-				ww := responseWriter(injector)
+				ww := ResponseWriter(injector)
 				ww.APIError(err)
 				return
 			}
@@ -212,7 +212,7 @@ func JSON(obj interface{}, ifacePtr ...interface{}) func(next http.Handler) http
 				panic("chi: register Injector middleware")
 			}
 			if err := bindJSON(r, injector, obj, ifacePtr...); err != nil {
-				ww := responseWriter(injector)
+				ww := ResponseWriter(injector)
 				ww.APIError(err)
 				return
 			}
