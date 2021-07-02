@@ -32,7 +32,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var validate = validator.New()
+var Validate = validator.New()
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
@@ -266,10 +266,10 @@ func check(val reflect.Value) error {
 	}
 
 	if val.Kind() == reflect.Struct {
-		return validate.Struct(val.Interface())
+		return Validate.Struct(val.Interface())
 	} else if val.Kind() == reflect.Slice {
 		for i := 0; i < val.Len(); i++ {
-			if err := validate.Struct(val.Index(i).Interface()); err != nil {
+			if err := Validate.Struct(val.Index(i).Interface()); err != nil {
 				return err
 			}
 		}
