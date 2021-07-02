@@ -26,13 +26,10 @@ import (
 	"go.wandrs.dev/inject"
 
 	"github.com/go-playground/form/v4"
-	"github.com/go-playground/validator/v10"
 	jsoniter "github.com/json-iterator/go"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-var validate = validator.New()
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
@@ -258,21 +255,4 @@ func ensureNotPointer(obj interface{}) {
 	if reflect.TypeOf(obj).Kind() == reflect.Ptr {
 		panic("Pointers are not accepted as binding models")
 	}
-}
-
-func check(val reflect.Value) error {
-	if val.Kind() == reflect.Ptr && !val.IsNil() {
-		val = val.Elem()
-	}
-
-	if val.Kind() == reflect.Struct {
-		return validate.Struct(val.Interface())
-	} else if val.Kind() == reflect.Slice {
-		for i := 0; i < val.Len(); i++ {
-			if err := validate.Struct(val.Index(i).Interface()); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
 }
