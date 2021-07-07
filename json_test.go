@@ -154,7 +154,7 @@ func performJSONTest(t *testing.T, binder binderFunc, testCase jsonTestCase) {
 	t.Run(testCase.description, func(t *testing.T) {
 		m := chi.NewRouter()
 		m.Use(middleware.Logger)
-		m.Use(binding.Injector(render.New()))
+		m.Use(binding.Injector(render.New(), logger()))
 
 		switch testCase.expected.(type) {
 		case []Post:
