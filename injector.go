@@ -212,9 +212,11 @@ func HandlerFunc(fn interface{}) http.HandlerFunc {
 		case 1:
 			if firstReturnIsErr {
 				err, _ := results[0].Interface().(error)
-				if !reflect.ValueOf(err).IsNil() || !ww.Written() {
-					ww.APIError(err)
+				if ww.Written() {
+					return
 				}
+
+				ww.APIError(err)
 				return
 			}
 
