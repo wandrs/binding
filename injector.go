@@ -212,7 +212,11 @@ func HandlerFunc(fn interface{}) http.HandlerFunc {
 		case 1:
 			if firstReturnIsErr {
 				err, _ := results[0].Interface().(error)
-				ww.APIError(err)
+				if err != nil && !reflect.ValueOf(err).IsNil() /*for error wrapper interfaces*/ {
+					ww.APIError(err)
+				} else if !ww.Written() { // returned error is nil, so function must write directly to http.ResponseWriter
+					panic(fmt.Sprintf("fn %s must write to ResponseWriter, since it returns nothing", typ))
+				}
 				return
 			}
 
