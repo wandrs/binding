@@ -94,7 +94,7 @@ func Test_MultipartForm(t *testing.T) {
 func performMultipartFormTest(t *testing.T, binder binderFunc, testCase multipartFormTestCase) {
 	m := chi.NewRouter()
 	m.Use(middleware.Logger)
-	m.Use(binding.Injector(render.New()))
+	m.Use(binding.Injector(render.New(), logger()))
 
 	m.With(binder(BlogPost{})).
 		Post(testRoute, binding.HandlerFunc(func(w http.ResponseWriter, actual BlogPost) {

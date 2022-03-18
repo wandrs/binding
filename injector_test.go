@@ -3,6 +3,7 @@ package binding_test
 import (
 	"encoding/json"
 	"errors"
+	"flag"
 	"io"
 	"io/fs"
 	"net/http"
@@ -14,13 +15,21 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-logr/logr"
 	"github.com/unrolled/render"
+	"k8s.io/klog/v2"
+	"k8s.io/klog/v2/klogr"
 )
 
 var returnErr = errors.New("err")
 
 type errorWrapper interface {
 	error
+}
+
+func logger() logr.Logger {
+	klog.InitFlags(flag.NewFlagSet("wandrs", flag.ContinueOnError))
+	return klogr.New().WithName("wandrs")
 }
 
 func toJSON(v interface{}) string {
@@ -691,7 +700,7 @@ func TestHandlerFunc(t *testing.T) {
 
 				m := chi.NewRouter()
 				m.Use(middleware.Logger)
-				m.Use(binding.Injector(render.New()))
+				m.Use(binding.Injector(render.New(), logger()))
 				m.Get("/", binding.HandlerFunc(tt.args))
 
 				m.ServeHTTP(w, req)

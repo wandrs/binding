@@ -180,7 +180,7 @@ func Test_Form(t *testing.T) {
 func performFormTest(t *testing.T, binder binderFunc, testCase formTestCase) {
 	m := chi.NewRouter()
 	m.Use(middleware.Logger)
-	m.Use(binding.Injector(render.New()))
+	m.Use(binding.Injector(render.New(), logger()))
 
 	switch testCase.expected.(type) {
 	case Post:

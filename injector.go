@@ -11,6 +11,7 @@ import (
 	"go.wandrs.dev/inject"
 
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-logr/logr"
 	"github.com/unrolled/render"
 )
 
@@ -22,7 +23,7 @@ var pool = sync.Pool{
 
 type injectorKey struct{}
 
-func Injector(r *render.Render) func(next http.Handler) http.Handler {
+func Injector(r *render.Render, log logr.Logger) func(next http.Handler) http.Handler {
 	if r == nil {
 		panic("chi: render must not be nil")
 	}
@@ -37,7 +38,7 @@ func Injector(r *render.Render) func(next http.Handler) http.Handler {
 					injector.MapTo(ww, (*middleware.WrapResponseWriter)(nil))
 				}
 				// give a chance to override render.Render
-				injector.MapTo(httpw.NewResponseWriter(w, req, r), (*httpw.ResponseWriter)(nil))
+				injector.MapTo(httpw.NewResponseWriter(w, req, r, log), (*httpw.ResponseWriter)(nil))
 
 				next.ServeHTTP(w, req)
 				return
@@ -56,7 +57,7 @@ func Injector(r *render.Render) func(next http.Handler) http.Handler {
 			if ww, ok := w.(middleware.WrapResponseWriter); ok {
 				injector.MapTo(ww, (*middleware.WrapResponseWriter)(nil))
 			}
-			injector.MapTo(httpw.NewResponseWriter(w, req, r), (*httpw.ResponseWriter)(nil))
+			injector.MapTo(httpw.NewResponseWriter(w, req, r, log), (*httpw.ResponseWriter)(nil))
 
 			// Serve the request and once its done, put the request context back in the sync pool
 			next.ServeHTTP(w, req)
