@@ -133,9 +133,7 @@ func Set(typ reflect.Type, val reflect.Value) func(next http.Handler) http.Handl
 	}
 }
 
-var (
-	errorType = reflect.TypeOf((*error)(nil)).Elem()
-)
+var errorType = reflect.TypeOf((*error)(nil)).Elem()
 
 // HandlerFunc converts a regular function into a net/http handler.
 //

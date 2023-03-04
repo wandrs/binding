@@ -54,9 +54,9 @@ func NewBindingError(err error, obj interface{}) *apierrors.StatusError {
 			Code:   http.StatusUnprocessableEntity,
 			Reason: metav1.StatusReasonInvalid,
 			Details: &metav1.StatusDetails{
-				//Group:  qualifiedKind.Group,
-				//Kind:   qualifiedKind.Kind,
-				//Name:   name,
+				// Group:  qualifiedKind.Group,
+				// Kind:   qualifiedKind.Kind,
+				// Name:   name,
 				Causes: causes,
 			},
 			// Message: fmt.Sprintf("%s %q is invalid: %v", qualifiedKind.String(), name, errs.ToAggregate()),
@@ -81,8 +81,8 @@ func NewBindingError(err error, obj interface{}) *apierrors.StatusError {
 			Reason: metav1.StatusReasonBadRequest,
 			Details: &metav1.StatusDetails{
 				// Group:  qualifiedKind.Group,
-				//Kind:   qualifiedKind.Kind,
-				//Name:   name,
+				// Kind:   qualifiedKind.Kind,
+				// Name:   name,
 				Causes: causes,
 			},
 			Message: fmt.Sprintf("failed to decode into %s", reflect.TypeOf(obj)),
