@@ -3,7 +3,7 @@ module go.wandrs.dev/binding
 go 1.19
 
 require (
-	github.com/go-chi/chi/v5 v5.0.3
+	github.com/go-chi/chi/v5 v5.2.2
 	github.com/go-playground/form/v4 v4.1.3
 	github.com/go-playground/validator/v10 v10.6.1
 	github.com/json-iterator/go v1.1.12
