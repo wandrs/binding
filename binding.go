@@ -169,15 +169,19 @@ func bindMultipartForm(r *http.Request, injector inject.Injector, obj interface{
 
 	newObj := reflect.New(reflect.TypeOf(obj))
 	// This if check is necessary due to https://github.com/martini-contrib/csrf/issues/6
-	if r.Form == nil {
+	if r.MultipartForm == nil {
 		if err := r.ParseMultipartForm(MaxMemory); err != nil {
 			return apierrors.NewBadRequest(err.Error())
 		}
 	}
 
-	d := form.NewDecoder()
-	if err := d.Decode(newObj.Interface(), r.Form); err != nil {
-		return NewBindingError(err, obj)
+	//d := form.NewDecoder()
+	//if err := d.Decode(newObj.Interface(), r.Form); err != nil {
+	//	return NewBindingError(err, obj)
+	//}
+
+	if err := mapForm(newObj, r.MultipartForm.Value, r.MultipartForm.File); err != nil {
+		return apierrors.NewBadRequest(err.Error())
 	}
 
 	if err := check(newObj); err != nil {
